@@ -1,4 +1,5 @@
 import re
+from sets import Set
 
 
 def which_one(str, arr):
@@ -6,6 +7,16 @@ def which_one(str, arr):
         if a in str:
             return a
     return ''
+
+
+def all_classes(objects):
+    classes = Set()
+
+    for obj in objects:
+        if obj['class'] != '':
+            classes.add(obj['class'])
+
+    return classes
 
 
 class VOC2006AnnotationParser(object):
