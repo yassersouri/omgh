@@ -71,5 +71,5 @@ class PASCAL_VOC_2006(Dataset):
 
                     all_classes_in_image = all_classes(objects)
 
-                    yield {'img': image_file, 'classes': all_classes_in_image, 'objects': objects}
+                    yield {'img_id': image_id, 'img_file': image_file, 'classes': all_classes_in_image, 'objects': objects}
 
