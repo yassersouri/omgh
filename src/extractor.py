@@ -37,7 +37,7 @@ class SIFT_SIFT_Extractor(BaseExtractor):
         for t in data:
             instance_name = "%s.%s" % (t['img_id'], self.FILE_NAMES_EXT)
             instance_path = self.storage.get_instance_path(self.STORAGE_SUPER_NAME, self.STORAGE_SUB_NAME, instance_name)
-            if (not self.storage.check_exists(instance_path)) or force:
+            if force or not self.storage.check_exists(instance_path):
                 img = cv2.imread(t['img_file'])
                 kp = self._keypoint_detector.detect(img, None)
                 kp, des = self._keypoint_extractor.compute(img, kp)
