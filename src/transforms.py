@@ -48,3 +48,20 @@ class PCA_Transform(Transform):
             joblib.dump(self._transform, self.model_path)
         else:
             self._transform = joblib.load(self.model_path)
+
+    def transform(self, data_generator, force=False):
+        """
+        returns a generator.
+        """
+        for t, des in data_generator:
+            print t['img_id']
+            instance_name = "%s.%s" % (t['img_id'], self.FILE_NAMES_EXT)
+            instance_path = self.storage.get_instance_path(self.STORAGE_SUPER_NAME, self.STORAGE_SUB_NAME, instance_name)
+
+            if force or not self.storage.check_exists(instance_path):
+                result = self._transform.transform(des)
+                self.storage.save_instance(instance_path, result)
+            else:
+                result = self.storage.load_instance(instance_path)
+
+            yield t, result
