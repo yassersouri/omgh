@@ -1,4 +1,5 @@
 import os
+import abc
 from pascal_utils import VOC2006AnnotationParser, all_classes
 
 
@@ -6,8 +7,17 @@ class Dataset(object):
     def __init__(self, base_path):
         self.base_path = base_path
 
+    @abc.abstractmethod
+    def get_train(self):
+        """ return a generator object that yields dictionares """
+
+    @abc.abstractmethod
+    def get_test(self):
+        """ return a generator object that yields dictionares """
+
 
 class PASCAL_VOC_2006(Dataset):
+    NAME = 'PASCAL_VOC_2006'
     ANNOTATIONS_FOLDER_NAME = 'Annotations'
     SETS_FOLDER_NAME = 'ImageSets'
     IMAGES_FOLDER_NAME = 'PNGImages'
@@ -29,7 +39,13 @@ class PASCAL_VOC_2006(Dataset):
     def classes(self):
         return self.CLASSES
 
-    def get_set(self, kind, object_class=None, difficult=False, truct=True):
+    def get_train(self):
+        return self.get_set('trainval', object_class=None, difficult=True, trunc=True)
+
+    def get_test(self):
+        return self.get_set('test', object_class=None, difficult=True, trunc=True)
+
+    def get_set(self, kind, object_class=None, difficult=False, trunc=True):
         """
         This function returns a generator object.
         `kind` must be one of: ['train', 'test', 'val', 'trainval']
@@ -43,9 +59,9 @@ class PASCAL_VOC_2006(Dataset):
 
         set_file_path = os.path.join(self.sets, set_file_name)
 
-        return self.parse_set(set_file_path, difficult, truct)
+        return self._parse_set(set_file_path, difficult, trunc)
 
-    def parse_set(self, set_file_path, difficult, truct):
+    def _parse_set(self, set_file_path, difficult, trunc):
         with open(set_file_path) as set_file:
             for line in set_file:
                 parts = line.split()
@@ -57,7 +73,6 @@ class PASCAL_VOC_2006(Dataset):
                     is_here = True
 
                 if is_here:
-                    print image_id
                     image_annotations_file = os.path.join(self.annotations, "%s.%s" % (image_id, self.ANNOTATIONS_FILE_EXT))
                     image_file = os.path.join(self.images, "%s.%s" % (image_id, self.IMAGE_FILE_EXT))
                     with open(image_annotations_file, 'r') as content_file:
