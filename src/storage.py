@@ -25,6 +25,10 @@ class datastore(object):
         sub_folder = self.get_sub_folder(super_name, sub_name)
         return os.path.join(sub_folder, instance_name)
 
+    def get_model_path(self, super_name, model_name):
+        super_folder = self.get_super_folder(super_name)
+        return os.path.join(super_folder, model_name)
+
     def check_exists(self, instance_path):
         if os.path.exists(instance_path):
             return True
