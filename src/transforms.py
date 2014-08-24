@@ -54,7 +54,6 @@ class PCA_Transform(Transform):
         returns a generator.
         """
         for t, des in data_generator:
-            print t['img_id']
             instance_name = "%s.%s" % (t['img_id'], self.FILE_NAMES_EXT)
             instance_path = self.storage.get_instance_path(self.STORAGE_SUPER_NAME, self.STORAGE_SUB_NAME, instance_name)
 
