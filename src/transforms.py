@@ -113,8 +113,14 @@ class GMMUniversalVocabulary(Transform):
 
             if force or not self.storage.check_exists(instance_path):
                 result = self._transform.predict(des)
-                self.storage.save_instance(instance_path, result)
+                hist = np.bincount(result)
+                # l2 normalize the histogram
+                hist = hist / np.linalg.norm(hist)
+                self.storage.save_instance(instance_path, hist)
             else:
-                result = self.storage.load_instance(instance_path)
+                hist = self.storage.load_instance(instance_path)
+                # the following line is the result of scipy loading what
+                # it saved differently!
+                hist = hist[0, :]
 
-            yield t, result
+            yield t, hist

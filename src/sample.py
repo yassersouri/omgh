@@ -28,7 +28,7 @@ uni_vocab = GMMUniversalVocabulary(temp_storage, n_components=128, covariance_ty
 uni_vocab.fit(pca_t.transform(feature_extractor.extract(voc2006, 'train')), test=True)
 
 if COMPLETE:
-    for t, des in uni_vocab.transform(pca_t.transform(feature_extractor.extract(voc2006, 'train'))):
+    for t, des in uni_vocab.transform(pca_t.transform(feature_extractor.extract(voc2006, 'train')), force=True):
         print t['img_id']
-    for t, des in uni_vocab.transform(pca_t.transform(feature_extractor.extract(voc2006, 'test'))):
+    for t, des in uni_vocab.transform(pca_t.transform(feature_extractor.extract(voc2006, 'test')), force=True):
         print t['img_id']
