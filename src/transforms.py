@@ -1,7 +1,9 @@
 import abc
 from sklearn.decomposition import PCA
+from sklearn.mixture import GMM
 import numpy as np
 import joblib
+from datetime import datetime as dt
 
 
 class Transform(object):
@@ -25,8 +27,8 @@ class Transform(object):
 class PCA_Transform(Transform):
     def __init__(self, storage, n_components=50):
         super(PCA_Transform, self).__init__(storage)
-        self.STORAGE_SUB_NAME = 'pca'
-        self.STORAGE_MODEL_NAME = 'pca_model'
+        self.STORAGE_SUB_NAME = 'pca_%d' % n_components
+        self.STORAGE_MODEL_NAME = 'pca_model_%s' % n_components
         self.MODEL_NAME = '%s.%s' % (self.STORAGE_MODEL_NAME, self.MODEL_NAME_EXT)
         self.sub_folder = self.storage.get_sub_folder(self.STORAGE_SUPER_NAME, self.STORAGE_SUB_NAME)
         self.storage.ensure_dir(self.sub_folder)
@@ -36,7 +38,6 @@ class PCA_Transform(Transform):
 
     def fit(self, data_generator, force=False):
         if force or not self.storage.check_exists(self.model_path):
-            print 'calculated'
             self._transform = PCA(n_components=self.n_components)
 
             def mid_generator():
@@ -64,3 +65,40 @@ class PCA_Transform(Transform):
                 result = self.storage.load_instance(instance_path)
 
             yield t, result
+
+
+class GMMUniversalVocabulary(Transform):
+    def __init__(self, storage, n_components=256, covariance_type='diag'):
+        assert covariance_type in ['spherical', 'tied', 'diag', 'full']
+
+        super(GMMUniversalVocabulary, self).__init__(storage)
+        self.STORAGE_SUB_NAME = 'gmm_universal_vocab_%d_%s' % (n_components, covariance_type)
+        self.STORAGE_MODEL_NAME = 'gmm_universal_%d_%s' % (n_components, covariance_type)
+        self.MODEL_NAME = '%s.%s' % (self.STORAGE_MODEL_NAME, self.MODEL_NAME_EXT)
+        self.sub_folder = self.storage.get_sub_folder(self.STORAGE_SUPER_NAME, self.STORAGE_SUB_NAME)
+        self.storage.ensure_dir(self.sub_folder)
+        self.model_path = self.storage.get_model_path(self.STORAGE_SUPER_NAME, self.MODEL_NAME)
+        self._transform = None
+        self.n_components = n_components
+        self.covariance_type = covariance_type
+
+    def fit(self, data_generator, force=False, test=False):
+        if force or not self.storage.check_exists(self.model_path):
+            self._transform = GMM(n_components=self.n_components, covariance_type=self.covariance_type)
+
+            def mid_generator():
+                for t, des in data_generator:
+                    yield des
+
+            X = np.vstack(mid_generator())
+            if test:
+                X = X[0:100000, :]
+            print X.shape
+            a = dt.now()
+            self._transform.fit(X)
+            b = dt.now()
+            print 'fitting gmm: \t', (b - a)
+            joblib.dump(self._transform, self.model_path)
+        else:
+            print 'loaded'
+            self._transform = joblib.load(self.model_path)
