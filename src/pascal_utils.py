@@ -1,5 +1,4 @@
 import re
-from sets import Set
 
 
 def which_one(str, arr):
@@ -10,7 +9,7 @@ def which_one(str, arr):
 
 
 def all_classes(objects):
-    classes = Set()
+    classes = set()
 
     for obj in objects:
         if obj['class'] != '':
