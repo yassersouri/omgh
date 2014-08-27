@@ -68,12 +68,12 @@ class PCA_Transform(Transform):
 
 
 class GMMUniversalVocabulary(Transform):
-    def __init__(self, storage, n_components=256, covariance_type='diag'):
+    def __init__(self, storage, n_components=256, covariance_type='diag', n_iter=50, n_init=5):
         assert covariance_type in ['spherical', 'tied', 'diag', 'full']
 
         super(GMMUniversalVocabulary, self).__init__(storage)
-        self.STORAGE_SUB_NAME = 'gmm_universal_vocab_%d_%s' % (n_components, covariance_type)
-        self.STORAGE_MODEL_NAME = 'gmm_universal_%d_%s' % (n_components, covariance_type)
+        self.STORAGE_SUB_NAME = 'gmm_universal_vocab_%d_%s_%d_%d' % (n_components, covariance_type, n_iter, n_init)
+        self.STORAGE_MODEL_NAME = 'gmm_universal_%d_%s_%d_%d' % (n_components, covariance_type, n_iter, n_init)
         self.MODEL_NAME = '%s.%s' % (self.STORAGE_MODEL_NAME, self.MODEL_NAME_EXT)
         self.sub_folder = self.storage.get_sub_folder(self.STORAGE_SUPER_NAME, self.STORAGE_SUB_NAME)
         self.storage.ensure_dir(self.sub_folder)
@@ -81,10 +81,12 @@ class GMMUniversalVocabulary(Transform):
         self._transform = None
         self.n_components = n_components
         self.covariance_type = covariance_type
+	self.n_iter = n_iter
+	self.n_init = n_init
 
     def fit(self, data_generator, force=False, test=False):
         if force or not self.storage.check_exists(self.model_path):
-            self._transform = GMM(n_components=self.n_components, covariance_type=self.covariance_type)
+            self._transform = GMM(n_components=self.n_components, covariance_type=self.covariance_type, n_iter=self.n_iter, n_init=self.n_init)
 
             def mid_generator():
                 for t, des in data_generator:
