@@ -6,8 +6,8 @@ from datetime import datetime as dt
 
 
 COMPLETE = False
-CALC_FEATURES = True
-CALC_PCA_TRANSFORMS = True
+CALC_FEATURES = False
+CALC_PCA_TRANSFORMS = False
 
 voc2006 = PASCAL_VOC_2006(
     '/Users/yasser/sharif-repo/Datasets/VOCdevkit/VOC2006')
@@ -46,14 +46,15 @@ uni_vocab = GMMUniversalVocabulary(
     n_iter=1, n_init=1)
 a = dt.now()
 uni_vocab.fit(
-    pca_t.transform(feature_extractor.extract(voc2006, 'train')), test=True)
+    pca_t.transform(feature_extractor.extract(voc2006, 'train')),
+    test=False)
 b = dt.now()
 print 'fitting gmm: \t', (b - a)
 
 if COMPLETE:
     for t, des in uni_vocab.transform(pca_t.transform(
-            feature_extractor.extract(voc2006, 'train')), force=True):
+            feature_extractor.extract(voc2006, 'train'))):
         print t['img_id']
     for t, des in uni_vocab.transform(pca_t.transform(
-            feature_extractor.extract(voc2006, 'test')), force=True):
+            feature_extractor.extract(voc2006, 'test'))):
         print t['img_id']

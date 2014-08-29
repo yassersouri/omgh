@@ -112,14 +112,9 @@ class GMMUniversalVocabulary(Transform):
             X = np.vstack(mid_generator())
             if test:
                 X = X[0:100000, :]
-            print X.shape
-            a = dt.now()
             self._transform.fit(X)
-            b = dt.now()
-            print 'fitting gmm: \t', (b - a)
             joblib.dump(self._transform, self.model_path)
         else:
-            print 'loaded'
             self._transform = joblib.load(self.model_path)
 
     def transform(self, data_generator, force=False):
