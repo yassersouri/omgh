@@ -1,14 +1,15 @@
 import cv2
 import abc
-import os
 
 
 class BaseExtractor(object):
+
     def __init__(self, storage):
         self.STORAGE_SUPER_NAME = 'features'
         self.FILE_NAMES_EXT = 'mat'
         self.storage = storage
-        self.super_folder = self.storage.get_super_folder(self.STORAGE_SUPER_NAME)
+        self.super_folder = self.storage.get_super_folder(
+            self.STORAGE_SUPER_NAME)
         self.storage.ensure_dir(self.super_folder)
 
     @abc.abstractmethod
@@ -17,10 +18,12 @@ class BaseExtractor(object):
 
 
 class SIFT_SIFT_Extractor(BaseExtractor):
+
     def __init__(self, storage):
         super(SIFT_SIFT_Extractor, self).__init__(storage)
         self.STORAGE_SUB_NAME = 'sift_sift'
-        self.sub_folder = self.storage.get_sub_folder(self.STORAGE_SUPER_NAME, self.STORAGE_SUB_NAME)
+        self.sub_folder = self.storage.get_sub_folder(
+            self.STORAGE_SUPER_NAME, self.STORAGE_SUB_NAME)
         self.storage.ensure_dir(self.sub_folder)
 
         self._keypoint_detector = cv2.FeatureDetector_create("SIFT")
@@ -36,7 +39,8 @@ class SIFT_SIFT_Extractor(BaseExtractor):
 
         for t in data:
             instance_name = "%s.%s" % (t['img_id'], self.FILE_NAMES_EXT)
-            instance_path = self.storage.get_instance_path(self.STORAGE_SUPER_NAME, self.STORAGE_SUB_NAME, instance_name)
+            instance_path = self.storage.get_instance_path(
+                self.STORAGE_SUPER_NAME, self.STORAGE_SUB_NAME, instance_name)
             if force or not self.storage.check_exists(instance_path):
                 img = cv2.imread(t['img_file'])
                 kp = self._keypoint_detector.detect(img, None)

@@ -3,6 +3,7 @@ import scipy.io
 
 
 class datastore(object):
+
     def __init__(self, base_path):
         self.base_path = base_path
         self.global_key = 'global_key'
@@ -36,7 +37,8 @@ class datastore(object):
             return False
 
     def save_instance(self, instance_path, instance):
-        scipy.io.savemat(instance_path, {self.global_key: instance}, do_compression=True)
+        scipy.io.savemat(
+            instance_path, {self.global_key: instance}, do_compression=True)
 
     def load_instance(self, instance_path):
         instance = scipy.io.loadmat(instance_path)
