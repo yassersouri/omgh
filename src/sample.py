@@ -2,7 +2,7 @@ from dataset import PASCAL_VOC_2006
 from storage import datastore
 from extractor import SIFT_SIFT_Extractor
 from transforms import PCA_Transform, GMMUniversalVocabulary
-from datatime import datatime as dt
+from datetime import datetime as dt
 
 
 COMPLETE = False
