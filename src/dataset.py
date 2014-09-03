@@ -17,6 +17,27 @@ class Dataset(object):
         """ return a generator object that yields dictionares """
 
 
+class CUB_200_2011(Dataset):
+    NAME = 'CUB_200_2011'
+    IMAGES_FOLDER_NAME = 'images'
+    IMAGES_FILE_NAME = 'images.txt'
+
+    def __init__(self, base_path):
+        super(CUB_200_2011, self).__init__(base_path)
+        self.images_folder = os.path.join(
+            self.base_path, self.IMAGES_FOLDER_NAME)
+        self.images_file = os.path.join(
+            self.base_path, self.IMAGES_FILE_NAME)
+
+    def get_all_images(self):
+        with open(self.images_file, 'r') as images_file:
+            for line in images_file:
+                parts = line.split()
+                assert len(parts) == 2
+                yield {'img_id': parts[0],
+                       'img_file': os.path.join(self.images_folder, parts[1])}
+
+
 class PASCAL_VOC_2006(Dataset):
     NAME = 'PASCAL_VOC_2006'
     ANNOTATIONS_FOLDER_NAME = 'Annotations'

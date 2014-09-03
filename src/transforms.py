@@ -3,7 +3,6 @@ from sklearn.decomposition import PCA
 from sklearn.mixture import GMM
 import numpy as np
 import joblib
-from datetime import datetime as dt
 
 
 class Transform(object):

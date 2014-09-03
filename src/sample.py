@@ -42,7 +42,7 @@ if COMPLETE or CALC_PCA_TRANSFORMS:
     print 'calculating all pcas: \t', (b - a)
 
 uni_vocab = GMMUniversalVocabulary(
-    transforms_storage, n_components=1, covariance_type='diag',
+    transforms_storage, n_components=2, covariance_type='diag',
     n_iter=1, n_init=1)
 a = dt.now()
 uni_vocab.fit(
