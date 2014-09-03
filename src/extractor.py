@@ -32,6 +32,8 @@ class SIFT_SIFT_Extractor(BaseExtractor):
     def extract(self, dataset, kind, force=False):
         assert kind in ['train', 'test']
 
+        # FIXME: this stuff should not be here
+        # instead it should receive only a generator
         if kind == 'train':
             data = dataset.get_train()
         elif kind == 'test':
