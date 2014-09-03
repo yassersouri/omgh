@@ -1,5 +1,7 @@
 from extractor import BaseExtractor
 import numpy as np
+import sys
+sys.path.append('/home/yasser/installs/caffe-0.9999/python/')
 import caffe
 
 
@@ -42,6 +44,7 @@ class CNN_Features_CAFFE_REFERENCE(BaseExtractor):
             else:
                 des = self.storage.load_instance(instance_path)
                 if len(des.shape) > 1:
-                    des = des[:, 0]
+                    des = des[0, :]
 
             yield t, des
+
