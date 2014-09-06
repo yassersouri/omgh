@@ -1,6 +1,7 @@
 import os
 import abc
 from pascal_utils import VOC2006AnnotationParser, all_classes
+import numpy as np
 
 
 class Dataset(object):
@@ -21,6 +22,10 @@ class CUB_200_2011(Dataset):
     NAME = 'CUB_200_2011'
     IMAGES_FOLDER_NAME = 'images'
     IMAGES_FILE_NAME = 'images.txt'
+    TRAIN_TEST_SPLIT_FILE_NAME = 'train_test_split.txt'
+    CLASS_LABEL_FILE_NAME = 'image_class_labels.txt'
+    SPLIT_FILE_TRAIN_INDICATOR = '1'
+    SPLIT_FILE_TEST_INDICATOR = '0'
 
     def __init__(self, base_path):
         super(CUB_200_2011, self).__init__(base_path)
@@ -28,6 +33,10 @@ class CUB_200_2011(Dataset):
             self.base_path, self.IMAGES_FOLDER_NAME)
         self.images_file = os.path.join(
             self.base_path, self.IMAGES_FILE_NAME)
+        self.train_test_split_file = os.path.join(
+            self.base_path, self.TRAIN_TEST_SPLIT_FILE_NAME)
+        self.class_label_file = os.path.join(
+            self.base_path, self.CLASS_LABEL_FILE_NAME)
 
     def get_all_images(self):
         with open(self.images_file, 'r') as images_file:
@@ -36,6 +45,54 @@ class CUB_200_2011(Dataset):
                 assert len(parts) == 2
                 yield {'img_id': parts[0],
                        'img_file': os.path.join(self.images_folder, parts[1])}
+
+    def get_train_test(self, read_extractor, xDim=4096):
+        trains = []
+        tests = []
+        indicators = []
+        with open(self.train_test_split_file, 'r') as split_file:
+            for line in split_file:
+                parts = line.split()
+                assert len(parts) == 2
+                img_id = parts[0]
+                indicator = parts[1]
+                indicators.append(indicator)
+                if indicator == self.SPLIT_FILE_TRAIN_INDICATOR:
+                    trains.append(img_id)
+                elif indicator == self.SPLIT_FILE_TEST_INDICATOR:
+                    tests.append(img_id)
+                else:
+                    raise Exception("Unknown indicator, %s" % indicator)
+
+        Xtrain = np.zeros((len(trains), xDim), dtype=np.float32)
+        ytrain = np.zeros((len(trains)), dtype=np.int)
+        Xtest = np.zeros((len(tests), xDim), dtype=np.float32)
+        ytest = np.zeros((len(tests)), dtype=np.int)
+
+        with open(self.class_label_file, 'r') as class_label:
+            line_num = 0
+            train_num = 0
+            test_num = 0
+            for line in class_label:
+                parts = line.split()
+                assert len(parts) == 2
+                img_id = parts[0]
+                img_cls = int(parts[1])
+                indicator = indicators[line_num]
+                if indicator == self.SPLIT_FILE_TRAIN_INDICATOR:
+                    # training
+                    Xtrain[train_num, :] = read_extractor(img_id)
+                    ytrain[train_num] = img_cls
+                    train_num += 1
+                else:
+                    # testing
+                    Xtest[test_num, :] = read_extractor(img_id)
+                    ytest[test_num] = img_cls
+                    test_num += 1
+
+                line_num += 1
+
+        return Xtrain, ytrain, Xtest, ytest
 
 
 class PASCAL_VOC_2006(Dataset):
