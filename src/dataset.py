@@ -24,6 +24,7 @@ class CUB_200_2011(Dataset):
     IMAGES_FILE_NAME = 'images.txt'
     TRAIN_TEST_SPLIT_FILE_NAME = 'train_test_split.txt'
     CLASS_LABEL_FILE_NAME = 'image_class_labels.txt'
+    BBOX_FILE_NAME = 'bounding_boxes.txt'
     SPLIT_FILE_TRAIN_INDICATOR = '1'
     SPLIT_FILE_TEST_INDICATOR = '0'
 
@@ -37,6 +38,8 @@ class CUB_200_2011(Dataset):
             self.base_path, self.TRAIN_TEST_SPLIT_FILE_NAME)
         self.class_label_file = os.path.join(
             self.base_path, self.CLASS_LABEL_FILE_NAME)
+        self.bbox_file = os.path.join(
+            self.base_path, self.BBOX_FILE_NAME)
 
     def get_all_images(self):
         with open(self.images_file, 'r') as images_file:
@@ -93,6 +96,11 @@ class CUB_200_2011(Dataset):
                 line_num += 1
 
         return Xtrain, ytrain, Xtest, ytest
+
+    def get_bbox(self):
+        bbox = np.genfromtxt(self.bbox_file, delimiter=' ')
+        bbox = bbox[:,1:]
+        return bbox
 
 
 class PASCAL_VOC_2006(Dataset):
