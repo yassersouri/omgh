@@ -99,7 +99,7 @@ class CUB_200_2011(Dataset):
 
     def get_bbox(self):
         bbox = np.genfromtxt(self.bbox_file, delimiter=' ')
-        bbox = bbox[:,1:]
+        bbox = bbox[:, 1:]
         return bbox
 
 
