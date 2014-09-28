@@ -97,6 +97,54 @@ class CUB_200_2011(Dataset):
 
         return Xtrain, ytrain, Xtest, ytest
 
+    def get_train_test_id(self, id):
+        trains = []
+        tests = []
+        indicators = []
+        with open(self.train_test_split_file, 'r') as split_file:
+            for line in split_file:
+                parts = line.split()
+                assert len(parts) == 2
+                img_id = parts[0]
+                indicator = parts[1]
+                indicators.append(indicator)
+                if indicator == self.SPLIT_FILE_TRAIN_INDICATOR:
+                    trains.append(img_id)
+                elif indicator == self.SPLIT_FILE_TEST_INDICATOR:
+                    tests.append(img_id)
+                else:
+                    raise Exception("Unknown indicator, %s" % indicator)
+
+        IDtrain = np.zeros((len(trains)), dtype=np.int)
+        ytrain = np.zeros((len(trains)), dtype=np.int)
+        IDtest = np.zeros((len(tests)), dtype=np.int)
+        ytest = np.zeros((len(tests)), dtype=np.int)
+
+        with open(self.class_label_file, 'r') as class_label:
+            line_num = 0
+            train_num = 0
+            test_num = 0
+            for line in class_label:
+                parts = line.split()
+                assert len(parts) == 2
+                img_id = parts[0]
+                img_cls = int(parts[1])
+                indicator = indicators[line_num]
+                if indicator == self.SPLIT_FILE_TRAIN_INDICATOR:
+                    # training
+                    IDtrain[train_num] = img_id
+                    ytrain[train_num] = img_cls
+                    train_num += 1
+                else:
+                    # testing
+                    IDtest[test_num] = img_id
+                    ytest[test_num] = img_cls
+                    test_num += 1
+
+                line_num += 1
+
+        return IDtrain, ytrain, IDtest, ytest
+
     def get_bbox(self):
         bbox = np.genfromtxt(self.bbox_file, delimiter=' ')
         bbox = bbox[:, 1:]
