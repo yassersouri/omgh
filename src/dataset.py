@@ -97,7 +97,7 @@ class CUB_200_2011(Dataset):
 
         return Xtrain, ytrain, Xtest, ytest
 
-    def get_train_test_id(self, id):
+    def get_train_test_id(self):
         trains = []
         tests = []
         indicators = []
@@ -143,7 +143,7 @@ class CUB_200_2011(Dataset):
 
                 line_num += 1
 
-        return IDtrain, ytrain, IDtest, ytest
+        return IDtrain, IDtest
 
     def get_bbox(self):
         bbox = np.genfromtxt(self.bbox_file, delimiter=' ')
