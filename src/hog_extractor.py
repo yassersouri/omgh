@@ -2,6 +2,7 @@ from extractor import BaseExtractor
 import numpy as np
 import cv2
 
+
 class HOG(BaseExtractor):
 
     def __init__(self, storage):
@@ -24,7 +25,7 @@ class HOG(BaseExtractor):
                 img = cv2.imread(t['img_file'])
 
                 # crop
-                x,y,w,h = bbox[int(t['img_id']) - 1]
+                x, y, w, h = bbox[int(t['img_id']) - 1]
                 img_c = img[y:y+h, x:x+w]
                 img_r = cv2.resize(img_c, (self.base_size, self.base_size))
 
@@ -33,7 +34,7 @@ class HOG(BaseExtractor):
 
                 # normalize
                 des = des / np.linalg.norm(des)
-                
+
                 self.storage.save_instance(instance_path, des)
             else:
                 des = self.storage.load_instance(instance_path)
