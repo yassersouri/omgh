@@ -40,6 +40,13 @@ class datastore(object):
         scipy.io.savemat(
             instance_path, {self.global_key: instance}, do_compression=True)
 
+    def save_full_instance(self, instance_path, instance):
+        scipy.io.savemat(instance_path, instance, do_compression=True)
+
     def load_instance(self, instance_path):
         instance = scipy.io.loadmat(instance_path)
         return instance[self.global_key]
+
+    def load_full_instance(self, instance_path):
+        instance = scipy.io.loadmat(instance_path)
+        return instance
