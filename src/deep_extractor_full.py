@@ -37,7 +37,7 @@ class CNN_Features_CAFFE_REFERENCE(BaseExtractor):
 
                 des = {}
                 for v in self.net.blobs.keys():
-                    des[v] = self.net.blobs.data[v].data
+                    des[v] = self.net.blobs[v].data
 
                 self.storage.save_full_instance(instance_path, des)
             else:
@@ -58,7 +58,7 @@ class CNN_Features_CAFFE_REFERENCE(BaseExtractor):
 
                 des = {}
                 for v in self.net.blobs.keys():
-                    des[v] = self.net.blobs.data[v].data
+                    des[v] = self.net.blobs[v].data
 
                 self.storage.save_full_instance(instance_path, des)
             else:
