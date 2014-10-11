@@ -49,7 +49,7 @@ class CUB_200_2011(Dataset):
                 yield {'img_id': parts[0],
                        'img_file': os.path.join(self.images_folder, parts[1])}
 
-    def get_train_test(self, read_extractor, xDim=4096):
+    def get_train_test(self, read_extractor, xDim=4096, augment=False):
         trains = []
         tests = []
         indicators = []
@@ -67,10 +67,15 @@ class CUB_200_2011(Dataset):
                 else:
                     raise Exception("Unknown indicator, %s" % indicator)
 
-        Xtrain = np.zeros((len(trains), xDim), dtype=np.float32)
-        ytrain = np.zeros((len(trains)), dtype=np.int)
-        Xtest = np.zeros((len(tests), xDim), dtype=np.float32)
-        ytest = np.zeros((len(tests)), dtype=np.int)
+        len_trains = len(trains)
+        len_tests = len(tests)
+        if augment:
+            len_trains = len_trains * 2
+
+        Xtrain = np.zeros((len_trains, xDim), dtype=np.float32)
+        ytrain = np.zeros(len_trains, dtype=np.int)
+        Xtest = np.zeros((len_tests, xDim), dtype=np.float32)
+        ytest = np.zeros(len_tests, dtype=np.int)
 
         with open(self.class_label_file, 'r') as class_label:
             line_num = 0
@@ -84,8 +89,14 @@ class CUB_200_2011(Dataset):
                 indicator = indicators[line_num]
                 if indicator == self.SPLIT_FILE_TRAIN_INDICATOR:
                     # training
-                    Xtrain[train_num, :] = read_extractor(img_id)
-                    ytrain[train_num] = img_cls
+                    if augment:
+                        Xtrain[2 * train_num, :] = read_extractor(img_id)
+                        Xtrain[2 * train_num + 1, :] = read_extractor(img_id, mirror=True)
+                        ytrain[2 * train_num] = img_cls
+                        ytrain[2 * train_num + 1] = img_cls
+                    else:
+                        Xtrain[train_num, :] = read_extractor(img_id)
+                        ytrain[train_num] = img_cls
                     train_num += 1
                 else:
                     # testing
@@ -97,7 +108,7 @@ class CUB_200_2011(Dataset):
 
         return Xtrain, ytrain, Xtest, ytest
 
-    def get_train_test_id(self):
+    def get_train_test_id(self, augment=False):
         trains = []
         tests = []
         indicators = []
@@ -115,10 +126,12 @@ class CUB_200_2011(Dataset):
                 else:
                     raise Exception("Unknown indicator, %s" % indicator)
 
-        IDtrain = np.zeros((len(trains)), dtype=np.int)
-        ytrain = np.zeros((len(trains)), dtype=np.int)
-        IDtest = np.zeros((len(tests)), dtype=np.int)
-        ytest = np.zeros((len(tests)), dtype=np.int)
+        len_trains = len(trains)
+        len_tests = len(tests)
+        if augment:
+            len_trains = len_trains * 2
+        IDtrain = np.zeros(len_trains, dtype=np.int)
+        IDtest = np.zeros(len_tests, dtype=np.int)
 
         with open(self.class_label_file, 'r') as class_label:
             line_num = 0
@@ -132,13 +145,15 @@ class CUB_200_2011(Dataset):
                 indicator = indicators[line_num]
                 if indicator == self.SPLIT_FILE_TRAIN_INDICATOR:
                     # training
-                    IDtrain[train_num] = img_id
-                    ytrain[train_num] = img_cls
+                    if augment:
+                        IDtrain[train_num * 2] = img_id
+                        IDtrain[train_num * 2 + 1] = img_id
+                    else:
+                        IDtrain[train_num] = img_id
                     train_num += 1
                 else:
                     # testing
                     IDtest[test_num] = img_id
-                    ytest[test_num] = img_cls
                     test_num += 1
 
                 line_num += 1
