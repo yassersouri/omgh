@@ -35,6 +35,11 @@ class CNN_Features_CAFFE_REFERENCE(BaseExtractor):
         else:
             des = self.storage.load_full_instance(instance_path)
             if mirror:
-                return des[self.feature_layer][self.center_crop_index_mirror][:, 0, 0]
+                data = des[self.feature_layer][self.center_crop_index_mirror]
             else:
-                return des[self.feature_layer][self.center_crop_index][:, 0, 0]
+                data = des[self.feature_layer][self.center_crop_index]
+
+            if len(data.shape) == 3:
+                return data[:, 0, 0]
+            else:
+                return data
