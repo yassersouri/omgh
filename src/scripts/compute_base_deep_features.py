@@ -1,30 +1,29 @@
+import sys, os
+sys.path.append(os.path.dirname(os.path.dirname(__file__)))
+import settings
 from dataset import CUB_200_2011
 from storage import datastore
 from deep_extractor import CNN_Features_CAFFE_REFERENCE
 from datetime import datetime as dt
 import pyprind
 
-cub = CUB_200_2011(
-    '/home/ipl/datasets/CUB-200-2011/CUB_200_2011/CUB_200_2011')
-model_file = '/home/ipl/installs/caffe-rc/models/bvlc_reference_caffenet/deploy.prototxt'
-pretrained_file = '/home/ipl/installs/caffe-rc/models/bvlc_reference_caffenet/bvlc_reference_caffenet.caffemodel'
-ilsvrc_mean = '/home/ipl/installs/caffe-rc/python/caffe/imagenet/ilsvrc_2012_mean.npy'
+cub = CUB_200_2011(settings.CUB_ROOT)
 
-features_storage = datastore('/home/ipl/datastores/cub-caffe-features/')
+features_storage = datastore(os.path.join(settings.STORAGE_BASE, 'cub-caffe-features'))
 feature_extractor = CNN_Features_CAFFE_REFERENCE(features_storage,
-    model_file, pretrained_file, ilsvrc_mean)
+    settings.MODEL_FILE, settings.PRETRAINED_FILE, settings.ILSVRC_MEAN)
 
-features_storage_flipped = datastore('/home/ipl/datastores/cub-caffe-features-flipped/')
+features_storage_flipped = datastore(os.path.join(settings.STORAGE_BASE, 'cub-caffe-features-flipped'))
 feature_extractor_flipped = CNN_Features_CAFFE_REFERENCE(features_storage_flipped,
-    model_file, pretrained_file, ilsvrc_mean)
+    settings.MODEL_FILE, settings.PRETRAINED_FILE, settings.ILSVRC_MEAN)
 
-features_storage_cropped = datastore('/home/ipl/datastores/cub-caffe-features-cropped/')
+features_storage_cropped = datastore(os.path.join(settings.STORAGE_BASE, 'cub-caffe-features-cropped'))
 feature_extractor_cropped = CNN_Features_CAFFE_REFERENCE(features_storage_cropped,
-    model_file, pretrained_file, ilsvrc_mean)
+    settings.MODEL_FILE, settings.PRETRAINED_FILE, settings.ILSVRC_MEAN)
 
-features_storage_flipped_cropped = datastore('/home/ipl/datastores/cub-caffe-features-flipped-cropped/')
+features_storage_flipped_cropped = datastore(os.path.join(settings.STORAGE_BASE, 'cub-caffe-features-flipped-cropped'))
 feature_extractor_flipped_cropped = CNN_Features_CAFFE_REFERENCE(features_storage_flipped_cropped,
-    model_file, pretrained_file, ilsvrc_mean)
+    settings.MODEL_FILE, settings.PRETRAINED_FILE, settings.ILSVRC_MEAN)
 
 number_of_images_in_dataset = sum(1 for _ in cub.get_all_images())
 
