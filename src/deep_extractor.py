@@ -3,11 +3,12 @@ import numpy as np
 import sys
 sys.path.append('/home/ipl/installs/caffe-rc/python/')
 import caffe
+import settings
 
 
 class CNN_Features_CAFFE_REFERENCE(BaseExtractor):
 
-    def __init__(self, storage, model_file, pretrained_file, image_mean):
+    def __init__(self, storage, model_file=settings.MODEL_FILE, pretrained_file=settings.PRETRAINED_FILE, image_mean=settings.ILSVRC_MEAN):
         super(CNN_Features_CAFFE_REFERENCE, self).__init__(storage)
         self.STORAGE_SUB_NAME = 'cnn_feature_caffe_reference'
         self.feature_layer = 'fc7'
@@ -24,7 +25,7 @@ class CNN_Features_CAFFE_REFERENCE(BaseExtractor):
         self.net = caffe.Classifier(self.model_file,
                                     self.pretrained_file,
                                     mean=np.load(self.image_mean),
-                                    channel_swap=(2,1,0),
+                                    channel_swap=(2, 1, 0),
                                     raw_scale=255,
                                     image_dims=(256, 256))
         self.net.set_mode_gpu()
@@ -39,8 +40,8 @@ class CNN_Features_CAFFE_REFERENCE(BaseExtractor):
                 if crop:
                     assert bbox is not None
                     #TODO: move to sepatate funciton
-                    x,y,w,h = bbox[int(t['img_id'])-1]
-                    im = im[y:y+h,x:x+w]
+                    x, y, w, h = bbox[int(t['img_id'])-1]
+                    im = im[y:y+h, :x+w]
 
                 if flip:
                     im = np.fliplr(im)
@@ -57,7 +58,6 @@ class CNN_Features_CAFFE_REFERENCE(BaseExtractor):
                     des = des[0, :]
 
             yield t, des
-
 
     def extract_one(self, img_id):
         instance_name = "%s.%s" % (img_id, self.FILE_NAMES_EXT)

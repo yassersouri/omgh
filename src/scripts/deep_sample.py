@@ -1,5 +1,5 @@
-import sys
-sys.path.append('/home/ipl/repo/toobreh/src/')
+import sys, os
+sys.path.append(os.path.dirname(os.path.dirname(__file__)))
 from matplotlib import pylab as plt
 from sklearn import svm
 from sklearn import metrics
