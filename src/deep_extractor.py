@@ -29,38 +29,23 @@ class CNN_Features_CAFFE_REFERENCE(BaseExtractor):
                                     image_dims=(256, 256))
         self.net.set_mode_gpu()
 
-    def extract(self, data_generator, force=False):
+    def extract_all(self, data_generator, flip=False, crop=False, force=False, bbox=None):
         for t in data_generator:
             instance_name = "%s.%s" % (t['img_id'], self.FILE_NAMES_EXT)
             instance_path = self.storage.get_instance_path(
                 self.STORAGE_SUPER_NAME, self.STORAGE_SUB_NAME, instance_name)
             if force or not self.storage.check_exists(instance_path):
-                self.net.predict([caffe.io.load_image(t['img_file'])])
+                im = caffe.io.load_image(t['img_file'])
+                if crop:
+                    assert bbox is not None
+                    #TODO: move to sepatate funciton
+                    x,y,w,h = bbox[int(t['img_id'])-1]
+                    im = im[y:y+h,x:x+w]
 
-                des = self.net.blobs[self.feature_layer].data[
-                    self.center_crop_index][:, 0, 0]
+                if flip:
+                    im = np.fliplr(im)
 
-                self.storage.save_instance(instance_path, des)
-            else:
-                des = self.storage.load_instance(instance_path)
-                if len(des.shape) > 1:
-                    des = des[0, :]
-
-            yield t, des
-
-
-    def extract_cropped(self, data_generator, bbox, force=False):
-        for t in data_generator:
-            instance_name = "%s.%s" % (t['img_id'], self.FILE_NAMES_EXT)
-            instance_path = self.storage.get_instance_path(
-                self.STORAGE_SUPER_NAME, self.STORAGE_SUB_NAME, instance_name)
-            if force or not self.storage.check_exists(instance_path):
-                #TODO: move to sepatate funciton
-                im_cropped = caffe.io.load_image(t['img_file'])
-                x,y,w,h = bbox[int(t['img_id'])-1]
-                im_cropped = im_cropped[y:y+h,x:x+w]
-
-                self.net.predict([im_cropped])
+                self.net.predict([im])
 
                 des = self.net.blobs[self.feature_layer].data[
                     self.center_crop_index][:, 0, 0]
@@ -79,6 +64,7 @@ class CNN_Features_CAFFE_REFERENCE(BaseExtractor):
         instance_path = self.storage.get_instance_path(
             self.STORAGE_SUPER_NAME, self.STORAGE_SUB_NAME, instance_name)
         if not self.storage.check_exists(instance_path):
+            #TODO: fix this
             raise Exception("Calculate deep features first then load them.")
         else:
             des = self.storage.load_instance(instance_path)
