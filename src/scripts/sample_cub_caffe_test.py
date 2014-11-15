@@ -1,6 +1,6 @@
 from dataset import CUB_200_2011
 from storage import datastore
-from deep_extractor_read import CNN_Features_CAFFE_REFERENCE
+from deep_extractor import CNN_Features_CAFFE_REFERENCE
 from datetime import datetime as dt
 
 
