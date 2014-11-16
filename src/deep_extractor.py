@@ -41,7 +41,7 @@ class CNN_Features_CAFFE_REFERENCE(BaseExtractor):
                     assert bbox is not None
                     # TODO: move to sepatate funciton
                     x, y, w, h = bbox[int(t['img_id']) - 1]
-                    im = im[y:y+h, :x+w]
+                    im = im[y:y+h, x:x+w]
 
                 if flip:
                     im = np.fliplr(im)
