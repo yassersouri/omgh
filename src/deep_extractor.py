@@ -4,7 +4,6 @@ import sys
 sys.path.append('/home/ipl/installs/caffe-rc/python/')
 import caffe
 import settings
-from matplotlib import pylab as plt
 
 
 class CNN_Features_CAFFE_REFERENCE(BaseExtractor):
@@ -42,17 +41,10 @@ class CNN_Features_CAFFE_REFERENCE(BaseExtractor):
                     assert bbox is not None
                     # TODO: move to sepatate funciton
                     x, y, w, h = bbox[int(t['img_id']) - 1]
-                    plt.imshow(im)
-                    plt.show()
                     im = im[y:y+h, :x+w]
-                    plt.imshow(im)
-                    plt.show()
 
                 if flip:
                     im = np.fliplr(im)
-                    plt.imshow(im)
-                    plt.show()
-                exit()
                 self.net.predict([im])
 
                 des = self.net.blobs[self.feature_layer].data[
