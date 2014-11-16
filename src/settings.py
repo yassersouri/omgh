@@ -10,7 +10,8 @@ STORAGE_NAMES = {
     'ccr': 'cub-caffe-features',
     'ccf': 'cub-caffe-features-flipped',
     'ccc': 'cub-caffe-features-cropped',
-    'ccfc': 'cub-caffe-features-flipped-cropped'
+    'ccfc': 'cub-caffe-features-flipped-cropped',
+    'oldccc': '../repo/datastores/cub-caffe-features-cropped'
 }
 
 
