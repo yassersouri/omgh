@@ -10,7 +10,7 @@ import settings
 
 
 cub = CUB_200_2011(settings.CUB_ROOT)
-features_storage = datastore(settings.storage('oldccc'))
+features_storage = datastore(settings.storage('ccr'))
 
 feature_extractor = CNN_Features_CAFFE_REFERENCE(features_storage)
 
