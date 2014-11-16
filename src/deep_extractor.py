@@ -4,6 +4,7 @@ import sys
 sys.path.append('/home/ipl/installs/caffe-rc/python/')
 import caffe
 import settings
+from matplotlib import pylab as plt
 
 
 class CNN_Features_CAFFE_REFERENCE(BaseExtractor):
@@ -26,8 +27,8 @@ class CNN_Features_CAFFE_REFERENCE(BaseExtractor):
                                     self.pretrained_file,
                                     mean=np.load(self.image_mean),
                                     channel_swap=(2, 1, 0),
-                                    raw_scale=255,
-                                    image_dims=(256, 256))
+                                    raw_scale=255)  # ,
+                                    # image_dims=(256, 256))
         self.net.set_mode_gpu()
 
     def extract_all(self, data_generator, flip=False, crop=False, force=False, bbox=None):
@@ -39,13 +40,19 @@ class CNN_Features_CAFFE_REFERENCE(BaseExtractor):
                 im = caffe.io.load_image(t['img_file'])
                 if crop:
                     assert bbox is not None
-                    #TODO: move to sepatate funciton
-                    x, y, w, h = bbox[int(t['img_id'])-1]
+                    # TODO: move to sepatate funciton
+                    x, y, w, h = bbox[int(t['img_id']) - 1]
+                    plt.imshow(im)
+                    plt.show()
                     im = im[y:y+h, :x+w]
+                    plt.imshow(im)
+                    plt.show()
 
                 if flip:
                     im = np.fliplr(im)
-
+                    plt.imshow(im)
+                    plt.show()
+                exit()
                 self.net.predict([im])
 
                 des = self.net.blobs[self.feature_layer].data[
@@ -64,7 +71,7 @@ class CNN_Features_CAFFE_REFERENCE(BaseExtractor):
         instance_path = self.storage.get_instance_path(
             self.STORAGE_SUPER_NAME, self.STORAGE_SUB_NAME, instance_name)
         if not self.storage.check_exists(instance_path):
-            #TODO: fix this
+            # TODO: fix this
             raise Exception("Calculate deep features first then load them.")
         else:
             des = self.storage.load_instance(instance_path)

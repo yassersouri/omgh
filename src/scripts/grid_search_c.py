@@ -19,11 +19,22 @@ Xtrain, ytrain, Xtest, ytest = cub.get_train_test(feature_extractor.extract_one)
 print Xtrain.shape, ytrain.shape
 print Xtest.shape, ytest.shape
 
+import numpy
 from sklearn import svm
 from sklearn.metrics import accuracy_score
+from sklearn.grid_search import GridSearchCV
+
+CS = numpy.array([3, 1, 0.1, 0.01, 0.001, 0.0001, 0.00001])
+model = svm.LinearSVC()
+grid_search = GridSearchCV(estimator=model, param_grid=dict(C=CS), n_jobs=-1)
+
+grid_search.fit(Xtrain, ytrain)
+
+print 'best c:', grid_search.best_params_
+
 
 a = dt.now()
-model = svm.LinearSVC(C=1)
+model = svm.LinearSVC(C=grid_search.best_params_['C'])
 model.fit(Xtrain, ytrain)
 b = dt.now()
 print 'fitted in: %s' % (b - a)
