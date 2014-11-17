@@ -39,4 +39,4 @@ b = dt.now()
 print 'predicted in: %s' % (b - a)
 
 print 'accuracy', accuracy_score(ytest, predictions)
-print 'mean accuracy', utils.mean_accuray(ytest, predictions)
+print 'mean accuracy', utils.mean_accuracy(ytest, predictions)

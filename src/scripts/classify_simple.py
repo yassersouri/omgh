@@ -11,7 +11,7 @@ import utils
 
 
 cub = CUB_200_2011(settings.CUB_ROOT)
-features_storage = datastore(settings.storage('ccr'))
+features_storage = datastore(settings.storage('ccc'))
 
 feature_extractor = CNN_Features_CAFFE_REFERENCE(features_storage)
 
