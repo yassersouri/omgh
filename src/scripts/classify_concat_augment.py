@@ -8,6 +8,7 @@ from deep_extractor import CNN_Features_CAFFE_REFERENCE
 from datetime import datetime as dt
 import numpy
 import settings
+import utils
 
 
 cub = CUB_200_2011(settings.CUB_ROOT)
@@ -49,4 +50,5 @@ predictions = model.predict(numpy.concatenate((Xtest, Xtest_c), 1))
 b = dt.now()
 print 'predicted in: %s' % (b - a)
 
-print accuracy_score(ytest, predictions)
+print 'accuracy', accuracy_score(ytest, predictions)
+print 'mean accuracy', utils.mean_accuray(ytest, predictions)
