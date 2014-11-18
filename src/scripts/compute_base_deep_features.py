@@ -7,19 +7,19 @@ from storage import datastore
 from deep_extractor import CNN_Features_CAFFE_REFERENCE
 import pyprind
 
-cub = CUB_200_2011(settings.CUB_ROOT)
+cub = CUB_200_2011(settings.CUB_ROOT, full=True)
 
 features_storage = datastore(settings.storage('ccr'))
-feature_extractor = CNN_Features_CAFFE_REFERENCE(features_storage)
+feature_extractor = CNN_Features_CAFFE_REFERENCE(features_storage, full=True)
 
 features_storage_flipped = datastore(settings.storage('ccf'))
-feature_extractor_flipped = CNN_Features_CAFFE_REFERENCE(features_storage_flipped)
+feature_extractor_flipped = CNN_Features_CAFFE_REFERENCE(features_storage_flipped, full=True)
 
 features_storage_cropped = datastore(settings.storage('ccc'))
-feature_extractor_cropped = CNN_Features_CAFFE_REFERENCE(features_storage_cropped)
+feature_extractor_cropped = CNN_Features_CAFFE_REFERENCE(features_storage_cropped, full=True)
 
 features_storage_flipped_cropped = datastore(settings.storage('ccfc'))
-feature_extractor_flipped_cropped = CNN_Features_CAFFE_REFERENCE(features_storage_flipped_cropped)
+feature_extractor_flipped_cropped = CNN_Features_CAFFE_REFERENCE(features_storage_flipped_cropped, full=True)
 
 number_of_images_in_dataset = sum(1 for _ in cub.get_all_images())
 

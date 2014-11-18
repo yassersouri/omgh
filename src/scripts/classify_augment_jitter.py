@@ -11,15 +11,18 @@ import settings
 import utils
 
 
+cub_full = CUB_200_2011(settings.CUB_ROOT, full=True)
 cub = CUB_200_2011(settings.CUB_ROOT, full=False)
 features_storage = datastore(settings.storage('ccc'))
+feature_extractor_full = CNN_Features_CAFFE_REFERENCE(features_storage, full=True)
 feature_extractor = CNN_Features_CAFFE_REFERENCE(features_storage, full=False)
 
 features_storage_f = datastore(settings.storage('ccfc'))
+feature_extractor_full_f = CNN_Features_CAFFE_REFERENCE(features_storage_f, full=True)
 feature_extractor_f = CNN_Features_CAFFE_REFERENCE(features_storage_f, full=False)
 
-Xtrain, ytrain, Xtest, ytest = cub.get_train_test(feature_extractor.extract_one)
-Xtrain_f, ytrain_f, Xtest_f, ytest_f = cub.get_train_test(feature_extractor_f.extract_one)
+Xtrain, ytrain, Xtest, ytest = cub_full.get_train_test(feature_extractor_full.extract_one, feature_extractor.extract_one)
+Xtrain_f, ytrain_f, Xtest_f, ytest_f = cub_full.get_train_test(feature_extractor_full_f.extract_one, feature_extractor_f.extract_one)
 
 print Xtrain.shape, ytrain.shape
 print Xtest.shape, ytest.shape
@@ -34,7 +37,7 @@ b = dt.now()
 print 'fitted in: %s' % (b - a)
 
 a = dt.now()
-predictions = model.predict(Xtest_f)
+predictions = model.predict(Xtest)
 b = dt.now()
 print 'predicted in: %s' % (b - a)
 

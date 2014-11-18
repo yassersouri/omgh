@@ -5,6 +5,7 @@ PRETRAINED_FILE = '/home/ipl/installs/caffe-rc/models/bvlc_reference_caffenet/bv
 ILSVRC_MEAN = '/home/ipl/installs/caffe-rc/python/caffe/imagenet/ilsvrc_2012_mean.npy'
 
 STORAGE_BASE = '/home/ipl/datastores/'
+FULL_LENGTH = 10
 
 STORAGE_NAMES = {
     'ccr': 'cub-caffe-features',

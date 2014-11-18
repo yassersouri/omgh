@@ -2,6 +2,7 @@ import os
 import abc
 from pascal_utils import VOC2006AnnotationParser, all_classes
 import numpy as np
+import settings
 
 
 class Dataset(object):
@@ -28,7 +29,7 @@ class CUB_200_2011(Dataset):
     SPLIT_FILE_TRAIN_INDICATOR = '1'
     SPLIT_FILE_TEST_INDICATOR = '0'
 
-    def __init__(self, base_path):
+    def __init__(self, base_path, full=False):
         super(CUB_200_2011, self).__init__(base_path)
         self.images_folder = os.path.join(
             self.base_path, self.IMAGES_FOLDER_NAME)
@@ -40,6 +41,9 @@ class CUB_200_2011(Dataset):
             self.base_path, self.CLASS_LABEL_FILE_NAME)
         self.bbox_file = os.path.join(
             self.base_path, self.BBOX_FILE_NAME)
+        self.full = full
+        if self.full:
+            self.full_length = settings.FULL_LENGTH
 
     def get_all_images(self):
         with open(self.images_file, 'r') as images_file:
@@ -49,7 +53,9 @@ class CUB_200_2011(Dataset):
                 yield {'img_id': parts[0],
                        'img_file': os.path.join(self.images_folder, parts[1])}
 
-    def get_train_test(self, read_extractor, xDim=4096, augment=False):
+    def get_train_test(self, read_extractor, read_extractor_nofull=None, xDim=4096):
+        if self.full:
+            assert read_extractor_nofull is not None
         trains = []
         tests = []
         indicators = []
@@ -69,13 +75,17 @@ class CUB_200_2011(Dataset):
 
         len_trains = len(trains)
         len_tests = len(tests)
-        if augment:
-            len_trains = len_trains * 2
 
-        Xtrain = np.zeros((len_trains, xDim), dtype=np.float32)
-        ytrain = np.zeros(len_trains, dtype=np.int)
-        Xtest = np.zeros((len_tests, xDim), dtype=np.float32)
-        ytest = np.zeros(len_tests, dtype=np.int)
+        if self.full:
+            Xtrain = np.zeros((len_trains * 10, xDim), dtype=np.float32)
+            ytrain = np.zeros(len_trains * 10, dtype=np.int)
+            Xtest = np.zeros((len_tests * 10, xDim), dtype=np.float32)
+            ytest = np.zeros(len_tests * 10, dtype=np.int)
+        else:
+            Xtrain = np.zeros((len_trains, xDim), dtype=np.float32)
+            ytrain = np.zeros(len_trains, dtype=np.int)
+            Xtest = np.zeros((len_tests, xDim), dtype=np.float32)
+            ytest = np.zeros(len_tests, dtype=np.int)
 
         with open(self.class_label_file, 'r') as class_label:
             line_num = 0
@@ -89,18 +99,19 @@ class CUB_200_2011(Dataset):
                 indicator = indicators[line_num]
                 if indicator == self.SPLIT_FILE_TRAIN_INDICATOR:
                     # training
-                    if augment:
-                        Xtrain[2 * train_num, :] = read_extractor(img_id)
-                        Xtrain[2 * train_num + 1, :] = read_extractor(img_id, mirror=True)
-                        ytrain[2 * train_num] = img_cls
-                        ytrain[2 * train_num + 1] = img_cls
+                    if self.full:
+                        Xtrain[10 * train_num: 10 * (train_num + 1), :] = read_extractor(img_id)
+                        ytrain[10 * train_num: 10 * (train_num + 1)] = np.tile(img_cls, self.full_length)
                     else:
                         Xtrain[train_num, :] = read_extractor(img_id)
                         ytrain[train_num] = img_cls
                     train_num += 1
                 else:
                     # testing
-                    Xtest[test_num, :] = read_extractor(img_id)
+                    if self.full:
+                        Xtest[test_num, :] = read_extractor_nofull(img_id)
+                    else:
+                        Xtest[test_num, :] = read_extractor(img_id)
                     ytest[test_num] = img_cls
                     test_num += 1
 
@@ -108,7 +119,7 @@ class CUB_200_2011(Dataset):
 
         return Xtrain, ytrain, Xtest, ytest
 
-    def get_train_test_id(self, augment=False):
+    def get_train_test_id(self):
         trains = []
         tests = []
         indicators = []
@@ -128,8 +139,6 @@ class CUB_200_2011(Dataset):
 
         len_trains = len(trains)
         len_tests = len(tests)
-        if augment:
-            len_trains = len_trains * 2
         IDtrain = np.zeros(len_trains, dtype=np.int)
         IDtest = np.zeros(len_tests, dtype=np.int)
 
@@ -141,15 +150,10 @@ class CUB_200_2011(Dataset):
                 parts = line.split()
                 assert len(parts) == 2
                 img_id = parts[0]
-                img_cls = int(parts[1])
                 indicator = indicators[line_num]
                 if indicator == self.SPLIT_FILE_TRAIN_INDICATOR:
                     # training
-                    if augment:
-                        IDtrain[train_num * 2] = img_id
-                        IDtrain[train_num * 2 + 1] = img_id
-                    else:
-                        IDtrain[train_num] = img_id
+                    IDtrain[train_num] = img_id
                     train_num += 1
                 else:
                     # testing

@@ -11,15 +11,15 @@ import settings
 import utils
 
 
-cub = CUB_200_2011(settings.CUB_ROOT, full=False)
+cub = CUB_200_2011(settings.CUB_ROOT)
 features_storage = datastore(settings.storage('ccc'))
-feature_extractor = CNN_Features_CAFFE_REFERENCE(features_storage, full=False)
+feature_extractor = CNN_Features_CAFFE_REFERENCE(features_storage)
 
-features_storage_f = datastore(settings.storage('ccfc'))
-feature_extractor_f = CNN_Features_CAFFE_REFERENCE(features_storage_f, full=False)
+features_storage_c = datastore(settings.storage('ccfc'))
+feature_extractor_c = CNN_Features_CAFFE_REFERENCE(features_storage_c)
 
 Xtrain, ytrain, Xtest, ytest = cub.get_train_test(feature_extractor.extract_one)
-Xtrain_f, ytrain_f, Xtest_f, ytest_f = cub.get_train_test(feature_extractor_f.extract_one)
+Xtrain_c, ytrain_c, Xtest_c, ytest_c = cub.get_train_test(feature_extractor_c.extract_one)
 
 print Xtrain.shape, ytrain.shape
 print Xtest.shape, ytest.shape
@@ -29,12 +29,12 @@ from sklearn.metrics import accuracy_score
 
 a = dt.now()
 model = svm.LinearSVC(C=0.0001)
-model.fit(numpy.concatenate((Xtrain, Xtrain_f)), numpy.concatenate((ytrain, ytrain_f)))
+model.fit(numpy.concatenate((Xtrain, Xtrain_c), 1), ytrain)
 b = dt.now()
 print 'fitted in: %s' % (b - a)
 
 a = dt.now()
-predictions = model.predict(Xtest_f)
+predictions = model.predict(numpy.concatenate((Xtest, Xtest_c), 1))
 b = dt.now()
 print 'predicted in: %s' % (b - a)
 
