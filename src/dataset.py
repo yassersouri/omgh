@@ -169,6 +169,18 @@ class CUB_200_2011(Dataset):
         bbox = bbox[:, 1:]
         return bbox
 
+    def get_class_dict(self):
+        class_dict = {}
+        with open(self.class_label_file, 'r') as class_label:
+            for line in class_label:
+                parts = line.split()
+                assert len(parts) == 2
+                img_id = parts[0]
+                img_cls = int(parts[1])
+                class_dict[img_id] = img_cls
+
+        return class_dict
+
 
 class PASCAL_VOC_2006(Dataset):
     NAME = 'PASCAL_VOC_2006'
