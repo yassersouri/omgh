@@ -9,9 +9,9 @@ import sklearn.cross_validation
 DO_TEST = True
 DO_TRAIN = True
 
-fine_tune_test_file = '/home/ipl/installs/caffe-rc/data/cub/test.txt'
-fine_tune_train_file = '/home/ipl/installs/caffe-rc/data/cub/train.txt'
-fine_tune_val_file = '/home/ipl/installs/caffe-rc/data/cub/val.txt'
+fine_tune_test_file = '/home/ipl/installs/caffe-rc/data/cub-cropped/test.txt'
+fine_tune_train_file = '/home/ipl/installs/caffe-rc/data/cub-cropped/train.txt'
+fine_tune_val_file = '/home/ipl/installs/caffe-rc/data/cub-cropped/val.txt'
 
 
 cub = CUB_200_2011(settings.CUB_ROOT)
@@ -22,7 +22,7 @@ print IDtrain[:100]
 
 if DO_TEST:
     test_file = open(fine_tune_test_file, 'w')
-    all_images = cub.get_all_images()
+    all_images = cub.get_all_images(cropped=True)
     for img_inf in all_images:
         img_id = img_inf['img_id']
         img_file = img_inf['img_file']
@@ -35,7 +35,7 @@ IDtrain_train, IDtrain_val = sklearn.cross_validation.train_test_split(IDtrain, 
 
 if DO_TRAIN:
     train_file = open(fine_tune_train_file, 'w')
-    all_images = cub.get_all_images()
+    all_images = cub.get_all_images(cropped=True)
     for img_inf in all_images:
         img_id = img_inf['img_id']
         img_file = img_inf['img_file']
@@ -44,7 +44,7 @@ if DO_TRAIN:
     train_file.close()
 
     val_file = open(fine_tune_val_file, 'w')
-    all_images = cub.get_all_images()
+    all_images = cub.get_all_images(cropped=True)
     for img_inf in all_images:
         img_id = img_inf['img_id']
         img_file = img_inf['img_file']
