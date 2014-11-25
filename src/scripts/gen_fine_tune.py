@@ -27,7 +27,7 @@ if DO_TEST:
         img_id = img_inf['img_id']
         img_file = img_inf['img_file']
         if int(img_id) in IDtest:
-            test_file.write("%s %s\n" % (img_file, str(class_dict[img_id])))
+            test_file.write("%s %s\n" % (img_file, str(class_dict[img_id] - 1)))
     test_file.close()
 
 
@@ -40,7 +40,7 @@ if DO_TRAIN:
         img_id = img_inf['img_id']
         img_file = img_inf['img_file']
         if int(img_id) in IDtrain_train:
-            train_file.write("%s %s\n" % (img_file, str(class_dict[img_id])))
+            train_file.write("%s %s\n" % (img_file, str(class_dict[img_id] - 1)))
     train_file.close()
 
     val_file = open(fine_tune_val_file, 'w')
@@ -49,7 +49,7 @@ if DO_TRAIN:
         img_id = img_inf['img_id']
         img_file = img_inf['img_file']
         if int(img_id) in IDtrain_val:
-            val_file.write("%s %s\n" % (img_file, str(class_dict[img_id])))
+            val_file.write("%s %s\n" % (img_file, str(class_dict[img_id] - 1)))
     val_file.close()
 
 print 'DONE'
