@@ -12,10 +12,10 @@ import utils
 
 
 cub = CUB_200_2011(settings.CUB_ROOT)
-features_storage = datastore(settings.storage('ccr'))
+features_storage = datastore(settings.storage('ccrft'))
 feature_extractor = CNN_Features_CAFFE_REFERENCE(features_storage)
 
-features_storage_c = datastore(settings.storage('ccc'))
+features_storage_c = datastore(settings.storage('cccft'))
 feature_extractor_c = CNN_Features_CAFFE_REFERENCE(features_storage_c)
 
 Xtrain, ytrain, Xtest, ytest = cub.get_train_test(feature_extractor.extract_one)
