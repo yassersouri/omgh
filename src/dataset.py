@@ -3,6 +3,8 @@ import abc
 from pascal_utils import VOC2006AnnotationParser, all_classes
 import numpy as np
 import settings
+import cv2
+import utils
 
 
 class Dataset(object):
@@ -22,6 +24,7 @@ class Dataset(object):
 class CUB_200_2011(Dataset):
     NAME = 'CUB_200_2011'
     IMAGES_FOLDER_NAME = 'images'
+    IMAGES_FOLDER_NAME_CROPPED = 'images_cropped'
     IMAGES_FILE_NAME = 'images.txt'
     TRAIN_TEST_SPLIT_FILE_NAME = 'train_test_split.txt'
     CLASS_LABEL_FILE_NAME = 'image_class_labels.txt'
@@ -33,6 +36,8 @@ class CUB_200_2011(Dataset):
         super(CUB_200_2011, self).__init__(base_path)
         self.images_folder = os.path.join(
             self.base_path, self.IMAGES_FOLDER_NAME)
+        self.images_folder_cropped = os.path.join(
+            self.base_path, self.IMAGES_FOLDER_NAME_CROPPED)
         self.images_file = os.path.join(
             self.base_path, self.IMAGES_FILE_NAME)
         self.train_test_split_file = os.path.join(
@@ -45,13 +50,32 @@ class CUB_200_2011(Dataset):
         if self.full:
             self.full_length = settings.FULL_LENGTH
 
-    def get_all_images(self):
+    def get_all_images(self, cropped=False):
         with open(self.images_file, 'r') as images_file:
             for line in images_file:
                 parts = line.split()
                 assert len(parts) == 2
+                folder = self.images_folder
+                if cropped:
+                    folder = self.images_folder_cropped
                 yield {'img_id': parts[0],
-                       'img_file': os.path.join(self.images_folder, parts[1])}
+                       'img_file': os.path.join(folder, parts[1])}
+
+    def gen_cropped_images(self):
+        bbox = self.get_bbox()
+        with open(self.images_file, 'r') as images_file:
+            for line in images_file:
+                parts = line.split()
+                image_file_address = os.path.join(self.images_folder, parts[1])
+                image_file_address_cropped = os.path.join(self.images_folder_cropped, parts[1])
+                image_cropped_dir = os.path.dirname(image_file_address_cropped)
+                utils.ensure_dir(image_cropped_dir)
+                image_id = parts[0]
+                image = cv2.imread(image_file_address)
+                x, y, w, h = bbox[int(image_id) - 1]
+                image = image[y:y+h, x:x+w]
+                cv2.imwrite(image_file_address_cropped, image)
+                print image_id
 
     def get_train_test(self, read_extractor, read_extractor_nofull=None, xDim=4096):
         if self.full:
