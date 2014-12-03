@@ -1,13 +1,25 @@
 import numpy as np
-import pandas as pd
 import re
 import click
 from matplotlib import pylab as plt
 
 
 @click.command()
-@click.argument('log_file', type=click.Path(exists=True))
-def main(log_file):
+@click.argument('files', nargs=-1, type=click.Path(exists=True))
+def main(files):
+    plt.style.use('ggplot')
+    fig, ax1 = plt.subplots()
+    ax2 = ax1.twinx()
+    ax1.set_xlabel('iteration')
+    ax1.set_ylabel('loss')
+    ax2.set_ylabel('accuracy %')
+    for i, log_file in enumerate(files):
+        loss_iterations, losses, accuracy_iterations, accuracies, accuracies_iteration_checkpoints_ind = parse_log(log_file)
+        disp_results(fig, ax1, ax2, loss_iterations, losses, accuracy_iterations, accuracies, accuracies_iteration_checkpoints_ind, color_ind=i)
+    plt.show()
+
+
+def parse_log(log_file):
     with open(log_file, 'r') as log_file:
         log = log_file.read()
 
@@ -25,21 +37,28 @@ def main(log_file):
     accuracy_pattern = r"Iteration (?P<iter_num>\d+), Testing net \(#0\)\n.* accuracy = (?P<accuracy>[+-]?(\d+(\.\d*)?|\.\d+)([eE][+-]?\d+)?)"
     accuracies = []
     accuracy_iterations = []
+    accuracies_iteration_checkpoints_ind = []
 
     for r in re.findall(accuracy_pattern, log):
-        accuracy_iterations.append(int(r[0]))
-        accuracies.append(float(r[1])*100)
+        iteration = int(r[0])
+        accuracy = float(r[1]) * 100
+
+        if iteration % 10000 == 0 and iteration > 0:
+            accuracies_iteration_checkpoints_ind.append(len(accuracy_iterations))
+
+        accuracy_iterations.append(iteration)
+        accuracies.append(accuracy)
 
     accuracy_iterations = np.array(accuracy_iterations)
     accuracies = np.array(accuracies)
 
-    disp_results(loss_iterations, losses, accuracy_iterations, accuracies)
+    return loss_iterations, losses, accuracy_iterations, accuracies, accuracies_iteration_checkpoints_ind
 
 
-def disp_results(loss_iterations, losses, accuracy_iterations, accuracies):
-    plt.plot(loss_iterations, losses)
-    plt.plot(accuracy_iterations, accuracies)
-    plt.show()
+def disp_results(fig, ax1, ax2, loss_iterations, losses, accuracy_iterations, accuracies, accuracies_iteration_checkpoints_ind, color_ind=0):
+    ax1.plot(loss_iterations, losses, color=plt.rcParams['axes.color_cycle'][color_ind * 2 + 0])
+    ax2.plot(accuracy_iterations, accuracies, plt.rcParams['axes.color_cycle'][color_ind * 2 + 1])
+    ax2.plot(accuracy_iterations[accuracies_iteration_checkpoints_ind], accuracies[accuracies_iteration_checkpoints_ind], 'o', color=plt.rcParams['axes.color_cycle'][color_ind * 2 + 1])
 
 
 if __name__ == '__main__':

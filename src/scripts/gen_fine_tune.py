@@ -10,7 +10,7 @@ import sklearn.cross_validation
 DO_TEST = True
 DO_TRAIN = True
 
-data_folder = 'cub-cropped-val'
+data_folder = 'cub-cropped-val-2'
 DO_CROP = True
 
 base_folder = '/home/ipl/installs/caffe-rc/data/%s/' % data_folder
@@ -40,7 +40,7 @@ if DO_TEST:
     test_file.close()
 
 
-IDtrain_train, IDtrain_val = sklearn.cross_validation.train_test_split(IDtrain, test_size=0.20, random_state=92204744)
+IDtrain_train, IDtrain_val = sklearn.cross_validation.train_test_split(IDtrain, test_size=0.20, random_state=92300072)
 
 if DO_TRAIN:
     train_file = open(fine_tune_train_file, 'w')
