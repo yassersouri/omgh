@@ -8,7 +8,7 @@ import settings
 
 class CNN_Features_CAFFE_REFERENCE(BaseExtractor):
 
-    def __init__(self, storage, model_file=settings.MODEL_FILE, pretrained_file=settings.PRETRAINED_FILE, image_mean=settings.ILSVRC_MEAN, full=False):
+    def __init__(self, storage, model_file=settings.DEFAULT_MODEL_FILE, pretrained_file=settings.DEFAULT_PRETRAINED_FILE, image_mean=settings.ILSVRC_MEAN, full=False):
         super(CNN_Features_CAFFE_REFERENCE, self).__init__(storage)
         self.STORAGE_SUB_NAME = 'cnn_feature_caffe_reference'
         self.full = full
