@@ -2,7 +2,7 @@ import sys
 import os
 sys.path.append(os.path.dirname(os.path.dirname(__file__)))
 
-from dataset import CUB_200_2011
+from dataset import CUB_200_2011, CUB_200_2011_Segmented
 import settings
 import utils
 import sklearn.cross_validation
@@ -10,7 +10,7 @@ import sklearn.cross_validation
 DO_TEST = True
 DO_TRAIN = True
 
-data_folder = 'cub-cropped-val-2'
+data_folder = 'cub-segmented-cropped'
 DO_CROP = True
 
 base_folder = '/home/ipl/installs/caffe-rc/data/%s/' % data_folder
@@ -23,11 +23,11 @@ fine_tune_val_file = '%s/val.txt' % base_folder
 fine_tune_train_val_file = '%s/trainval.txt' % base_folder
 
 
-cub = CUB_200_2011(settings.CUB_ROOT)
+# cub = CUB_200_2011(settings.CUB_ROOT)
+cub = CUB_200_2011_Segmented(settings.CUB_ROOT)
 class_dict = cub.get_class_dict()
 
 IDtrain, IDtest = cub.get_train_test_id()
-print IDtrain[:100]
 
 if DO_TEST:
     test_file = open(fine_tune_test_file, 'w')
