@@ -4,9 +4,9 @@ import scipy.io
 
 class datastore(object):
 
-    def __init__(self, base_path):
+    def __init__(self, base_path, global_key='global_key'):
         self.base_path = base_path
-        self.global_key = 'global_key'
+        self.global_key = global_key
 
     @classmethod
     def ensure_dir(cls, path):

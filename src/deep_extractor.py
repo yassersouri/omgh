@@ -8,7 +8,7 @@ import settings
 
 class CNN_Features_CAFFE_REFERENCE(BaseExtractor):
 
-    def __init__(self, storage, model_file=settings.DEFAULT_MODEL_FILE, pretrained_file=settings.DEFAULT_PRETRAINED_FILE, image_mean=settings.ILSVRC_MEAN, full=False):
+    def __init__(self, storage, model_file=settings.DEFAULT_MODEL_FILE, pretrained_file=settings.DEFAULT_PRETRAINED_FILE, image_mean=settings.ILSVRC_MEAN, full=False, make_net=True):
         super(CNN_Features_CAFFE_REFERENCE, self).__init__(storage)
         self.STORAGE_SUB_NAME = 'cnn_feature_caffe_reference'
         self.full = full
@@ -27,19 +27,20 @@ class CNN_Features_CAFFE_REFERENCE(BaseExtractor):
         self.pretrained_file = pretrained_file
         self.image_mean = image_mean
 
-        self.net = caffe.Classifier(self.model_file,
-                                    self.pretrained_file,
-                                    mean=np.load(self.image_mean),
-                                    channel_swap=(2, 1, 0),
-                                    raw_scale=255)
-        if self.full:
+        if make_net:
             self.net = caffe.Classifier(self.model_file,
                                         self.pretrained_file,
                                         mean=np.load(self.image_mean),
                                         channel_swap=(2, 1, 0),
-                                        raw_scale=255,
-                                        image_dims=(256, 256))
-        self.net.set_mode_gpu()
+                                        raw_scale=255)
+            if self.full:
+                self.net = caffe.Classifier(self.model_file,
+                                            self.pretrained_file,
+                                            mean=np.load(self.image_mean),
+                                            channel_swap=(2, 1, 0),
+                                            raw_scale=255,
+                                            image_dims=(256, 256))
+            self.net.set_mode_gpu()
 
     def extract_all(self, data_generator, flip=False, crop=False, force=False, bbox=None):
         for t in data_generator:
@@ -91,3 +92,6 @@ class CNN_Features_CAFFE_REFERENCE(BaseExtractor):
                 if len(des.shape) > 1:
                     des = des[0, :]
             return des
+
+    def dummy_extract_one(self, img_id, xDim=4096):
+        return np.zeros(xDim)

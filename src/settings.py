@@ -9,6 +9,7 @@ MODEL_FILE_TEMP = '%s/models/%s/deploy.prototxt'
 PRETRAINED_FILE_TEMP = '%s/models/%s/%s_iter_%d.caffemodel'
 
 STORAGE_BASE = '/home/ipl/datastores/'
+PREDICTIONS_BASE = '%spredictions/' % STORAGE_BASE
 FULL_LENGTH = 10
 
 STORAGE_NAMES = {
@@ -41,6 +42,10 @@ def dyn_aug(sname, folder_name, full_name, iter_len=10):
         PRETRAINED_NAMES[name] = PRETRAINED_FILE_TEMP % (CAFFE_ROOT, folder_name, full_name, iteration)
 
 dyn_aug('cccftv1', 'finetune_cub_cropped_val_1', 'finetune_cub', 10)
+dyn_aug('cccftv1_2', 'finetune_cub_cropped_val_1_2', 'finetune_cub', 10)
+dyn_aug('cccftv2', 'finetune_cub_cropped_val_2', 'finetune_cub', 10)
+dyn_aug('cccftt', 'finetune_cub_cropped', 'finetune_cub_cropped', 10)
+dyn_aug('ccrftt', 'finetune_cub', 'finetune_cub', 10)
 
 
 def storage(sname):
