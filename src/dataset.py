@@ -206,6 +206,9 @@ class CUB_200_2011(Dataset):
         return class_dict
 
 
+# Bofore using this class make sure that you have first issued the following commands
+# python src/scripts/make_segmented_dataset.py
+# with approperiat arguments and options.
 class CUB_200_2011_Segmented(CUB_200_2011):
     IMAGES_FOLDER_NAME = 'images_segmented'
     IMAGES_FOLDER_NAME_CROPPED = 'images_segmented_cropped'

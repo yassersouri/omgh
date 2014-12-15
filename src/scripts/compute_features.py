@@ -2,7 +2,7 @@ import sys
 import os
 sys.path.append(os.path.dirname(os.path.dirname(__file__)))
 import settings
-from dataset import CUB_200_2011
+from dataset import CUB_200_2011, CUB_200_2011_Segmented
 from storage import datastore
 from deep_extractor import CNN_Features_CAFFE_REFERENCE
 import pyprind
@@ -16,10 +16,18 @@ import click
 @click.option('--full', type=click.BOOL, default=False)
 @click.option('--flipped', type=click.BOOL, default=False)
 @click.option('--force', type=click.BOOL, default=False)
-def main(sname, iteration, cropped, full, flipped, force):
+@click.option('--segmented', type=click.BOOL, default=False)
+@click.option('--storage-name', default='')
+def main(sname, iteration, cropped, full, flipped, force, segmented, storage_name):
     new_name = '%s-%d' % (sname, iteration)
-    cub = CUB_200_2011(settings.CUB_ROOT, full=full)
-    ft_storage = datastore(settings.storage(new_name))
+    if segmented:
+        cub = CUB_200_2011_Segmented(settings.CUB_ROOT, full=full)
+    else:
+        cub = CUB_200_2011(settings.CUB_ROOT, full=full)
+    if not storage_name:
+        ft_storage = datastore(settings.storage(new_name))
+    else:
+        ft_storage = datastore(settings.storage(storage_name))
     ft_extractor = CNN_Features_CAFFE_REFERENCE(ft_storage, model_file=settings.model(new_name), pretrained_file=settings.pretrained(new_name), full=full)
     number_of_images_in_dataset = sum(1 for _ in cub.get_all_images())
     bar = pyprind.ProgBar(number_of_images_in_dataset, width=80)
