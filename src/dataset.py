@@ -206,6 +206,11 @@ class CUB_200_2011(Dataset):
         return class_dict
 
 
+class CUB_200_2011_Segmented(CUB_200_2011):
+    IMAGES_FOLDER_NAME = 'images_segmented'
+    IMAGES_FOLDER_NAME_CROPPED = 'images_segmented_cropped'
+
+
 class PASCAL_VOC_2006(Dataset):
     NAME = 'PASCAL_VOC_2006'
     ANNOTATIONS_FOLDER_NAME = 'Annotations'
