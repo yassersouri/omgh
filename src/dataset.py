@@ -29,6 +29,9 @@ class CUB_200_2011(Dataset):
     TRAIN_TEST_SPLIT_FILE_NAME = 'train_test_split.txt'
     CLASS_LABEL_FILE_NAME = 'image_class_labels.txt'
     BBOX_FILE_NAME = 'bounding_boxes.txt'
+    PARTS_FOLDER_NAME = 'parts'
+    PARTS_FILE_NAME = 'parts.txt'
+    PART_LOCS_FILE_NAME = 'part_locs.txt'
     SPLIT_FILE_TRAIN_INDICATOR = '1'
     SPLIT_FILE_TEST_INDICATOR = '0'
 
@@ -46,6 +49,10 @@ class CUB_200_2011(Dataset):
             self.base_path, self.CLASS_LABEL_FILE_NAME)
         self.bbox_file = os.path.join(
             self.base_path, self.BBOX_FILE_NAME)
+        self.parts_file = os.path.join(
+            self.base_path, self.PARTS_FOLDER_NAME, self.PARTS_FILE_NAME)
+        self.part_locs_file = os.path.join(
+            self.base_path, self.PARTS_FOLDER_NAME, self.PART_LOCS_FILE_NAME)
         self.full = full
         if self.full:
             self.full_length = settings.FULL_LENGTH
@@ -192,6 +199,11 @@ class CUB_200_2011(Dataset):
         bbox = np.genfromtxt(self.bbox_file, delimiter=' ')
         bbox = bbox[:, 1:]
         return bbox
+
+    def get_ploc(self):
+        ploc = np.genfromtxt(self.part_locs_file, delimiter=' ')
+        # FIXME: make a class for part locations
+        return ploc
 
     def get_class_dict(self):
         class_dict = {}
