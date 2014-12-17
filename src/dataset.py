@@ -5,6 +5,8 @@ import numpy as np
 import settings
 import cv2
 import utils
+from parts import CUBParts
+from itertools import ifilter
 
 
 class Dataset(object):
@@ -67,6 +69,14 @@ class CUB_200_2011(Dataset):
                     folder = self.images_folder_cropped
                 yield {'img_id': parts[0],
                        'img_file': os.path.join(folder, parts[1])}
+
+    def get_image_info(self, img_id):
+        """
+        don't call this function alot!
+        """
+        all_of_them = [i for i in ifilter(lambda i: int(i['img_id']) == int(img_id), self.get_all_images())]
+
+        return all_of_them[0]['img_file']
 
     def gen_cropped_images(self):
         bbox = self.get_bbox()
@@ -200,10 +210,10 @@ class CUB_200_2011(Dataset):
         bbox = bbox[:, 1:]
         return bbox
 
-    def get_ploc(self):
-        ploc = np.genfromtxt(self.part_locs_file, delimiter=' ')
-        # FIXME: make a class for part locations
-        return ploc
+    def get_parts(self):
+        ploc = np.genfromtxt(self.part_locs_file, delimiter=' ').astype(np.int)
+
+        return CUBParts(ploc, self.get_bbox())
 
     def get_class_dict(self):
         class_dict = {}
