@@ -14,6 +14,65 @@ class Part(object):
     def __repr__(self):
         return self.__str__()
 
+    def is_part(self, part_name):
+        return part_name == self.part_name
+
+    def is_part_id(self, part_id):
+        return part_id == self.part_id
+
+
+class Parts(object):
+
+    def __init__(self, parts):
+        self.parts = parts
+
+    def __len__(self):
+        return len(self.parts)
+
+    def __iter__(self):
+        return self.parts.__iter__()
+
+    def __str__(self):
+        string = '\n'.join([str(p) for p in self])
+        return '[' + string + ']'
+
+    def __repr__(self):
+        return self.__str__()
+
+    def filter_by_name(self, names):
+        filtered_parts = []
+        for name in names:
+            for part in self.parts:
+                if part.is_part(name):
+                    filtered_parts.append(part)
+
+        return Parts(filtered_parts)
+
+    def center(self):
+        mean_x, mean_y = 0., 0.
+
+        for part in self.parts:
+            mean_x += part.x
+            mean_y += part.y
+
+        return mean_x/len(self), mean_y/len(self)
+
+    def bounding_height_width(self):
+        min_x, max_x, min_y, max_y = 0, 100000, 0, 100000
+
+        for part in self.parts:
+            if min_x > part_x:
+                min_x = part.x
+            if min_y > part_y:
+                min_y = part.y
+
+            if max_x < part_x:
+                max_x = part.x
+            if max_y < part_y:
+                max_y = part.y
+
+        return max_x - min_x, max_y - min_y
+
 class CUBParts(object):
 
     PART_NUMBERS = {'back': 1, 'beak': 2, 'belly': 3, 'breast': 4, 'crown': 5, 'forehead': 6, 'left eye': 7, 'left leg': 8, 'left wing': 9, 'nape': 10, 'right eye': 11, 'right leg': 12, 'right wing': 13, 'tail': 14, 'throat': 15}
@@ -50,5 +109,5 @@ class CUBParts(object):
             is_visible = r_i[self.DIM_VISIBLE]
             parts.append(Part(img_id, part_name, part_id, part_x, part_y, is_visible))
 
-        return parts
+        return Parts(parts)
 
