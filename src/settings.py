@@ -3,6 +3,7 @@ import os
 CAFFE_ROOT = '/home/ipl/installs/caffe-rc'
 CAFFE_PYTHON_PATH = '/home/ipl/installs/caffe-rc/python/'
 CUB_ROOT = '/home/ipl/datasets/CUB-200-2011/CUB_200_2011/CUB_200_2011'
+CUB_IMAGES_FOLDER = '%s/images/' % CUB_ROOT
 DEFAULT_MODEL_FILE = '%s/models/bvlc_reference_caffenet/deploy.prototxt' % CAFFE_ROOT
 DEFAULT_PRETRAINED_FILE = '%s/models/bvlc_reference_caffenet/bvlc_reference_caffenet.caffemodel' % CAFFE_ROOT
 ILSVRC_MEAN = '%s/python/caffe/imagenet/ilsvrc_2012_mean.npy' % CAFFE_ROOT

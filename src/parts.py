@@ -102,7 +102,12 @@ class Parts(object):
         mul = 2
         div = 3
 
-        return img[(c_y - h*mul/div):(c_y + h*mul/div), (c_x - w*mul/div):(c_x + w*mul/div)]
+        xmin = max(0, (c_y - h*mul/div))
+        xmax = min(img.shape[0]-1, (c_y + h*mul/div))
+        ymin = max(0, (c_x - w*mul/div))
+        ymax = min(img.shape[1]-1, (c_x + w*mul/div))
+
+        return img[xmin:xmax, ymin:ymax]
 
 class CUBParts(object):
 
@@ -129,6 +134,7 @@ class CUBParts(object):
         """
         returns a list of Part objects
         """
+        img_id = int(img_id)
         related_info = self.info[(self.info[:, self.DIM_IMG_ID] == img_id) & (self.info[:, self.DIM_VISIBLE] == self.IS_VISIBLE), :]
         parts = []
         for r_i in related_info:
