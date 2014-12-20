@@ -39,12 +39,5 @@ def main(cub_path, seg_path, out_path):
         skimage.io.imsave(out_image_path, so_image)
 
 
-
-
-
-
-
-
-
 if __name__ == '__main__':
     main()

@@ -1,3 +1,6 @@
+import cv2
+
+
 class Part(object):
 
     def __init__(self, img_id, part_name, part_id, x, y, is_visible):
@@ -22,6 +25,8 @@ class Part(object):
 
 
 class Parts(object):
+
+    HEAD_PART_NAMES = ['beak', 'crown', 'forehead', 'nape', 'right eye', 'throat', 'left eye']
 
     def __init__(self, parts):
         self.parts = parts
@@ -72,6 +77,32 @@ class Parts(object):
                 max_y = part.y
 
         return max_x - min_x, max_y - min_y
+
+    def draw_part(self, ax):
+        for part in self:
+            ax.plot(part.x, part.y, 'o')
+
+    def draw_rect(self, img):
+        c_x, c_y = self.center()
+        c_x, c_y = int(c_x), int(c_y)
+        
+        w, h = self.bounding_width_height()
+        
+        mul = 2
+        div = 3
+        
+        cv2.rectangle(img, (c_x - w*mul/div, c_y - h*mul/div), (c_x + w*mul/div, c_y + h*mul/div), (25, 125, 255))
+
+    def get_rect(self, img):
+        c_x, c_y = self.center()
+        c_x, c_y = int(c_x), int(c_y)
+        
+        w, h = self.bounding_width_height()
+        
+        mul = 2
+        div = 3
+
+        return img[(c_y - h*mul/div):(c_y + h*mul/div), (c_x - w*mul/div):(c_x + w*mul/div)]
 
 class CUBParts(object):
 
