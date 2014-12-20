@@ -57,18 +57,18 @@ class Parts(object):
 
         return mean_x/len(self), mean_y/len(self)
 
-    def bounding_height_width(self):
-        min_x, max_x, min_y, max_y = 0, 100000, 0, 100000
+    def bounding_width_height(self):
+        min_x, max_x, min_y, max_y = 100000, 0, 100000, 0
 
         for part in self.parts:
-            if min_x > part_x:
+            if min_x > part.x:
                 min_x = part.x
-            if min_y > part_y:
+            if min_y > part.y:
                 min_y = part.y
 
-            if max_x < part_x:
+            if max_x < part.x:
                 max_x = part.x
-            if max_y < part_y:
+            if max_y < part.y:
                 max_y = part.y
 
         return max_x - min_x, max_y - min_y
