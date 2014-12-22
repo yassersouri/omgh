@@ -8,14 +8,14 @@ import settings
 
 class CNN_Features_CAFFE_REFERENCE(BaseExtractor):
 
-    def __init__(self, storage, model_file=settings.DEFAULT_MODEL_FILE, pretrained_file=settings.DEFAULT_PRETRAINED_FILE, image_mean=settings.ILSVRC_MEAN, full=False, make_net=True):
+    def __init__(self, storage, model_file=settings.DEFAULT_MODEL_FILE, pretrained_file=settings.DEFAULT_PRETRAINED_FILE, image_mean=settings.ILSVRC_MEAN, full=False, make_net=True, feature_layer='fc7', crop_index=4):
         super(CNN_Features_CAFFE_REFERENCE, self).__init__(storage)
         self.STORAGE_SUB_NAME = 'cnn_feature_caffe_reference'
         self.full = full
         if self.full:
             self.STORAGE_SUB_NAME = 'cnn_feature_caffe_reference_full'
-        self.feature_layer = 'fc7'
-        self.center_crop_index = 4
+        self.feature_layer = feature_layer
+        self.feature_crop_index = crop_index
         if self.full:
             self.full_length = settings.FULL_LENGTH
 
@@ -63,7 +63,7 @@ class CNN_Features_CAFFE_REFERENCE(BaseExtractor):
                     des = self.net.blobs[self.feature_layer].data[:, :, 0, 0]
                 else:
                     des = self.net.blobs[self.feature_layer].data[
-                        self.center_crop_index][:, 0, 0]
+                        self.feature_crop_index][:, 0, 0]
 
                 self.storage.save_instance(instance_path, des)
             else:
