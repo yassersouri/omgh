@@ -8,7 +8,7 @@ import settings
 
 class CNN_Features_CAFFE_REFERENCE(BaseExtractor):
 
-    def __init__(self, storage, model_file=settings.DEFAULT_MODEL_FILE, pretrained_file=settings.DEFAULT_PRETRAINED_FILE, image_mean=settings.ILSVRC_MEAN, full=False, make_net=True, feature_layer='fc7', crop_index=4):
+    def __init__(self, storage, model_file=settings.DEFAULT_MODEL_FILE, pretrained_file=settings.DEFAULT_PRETRAINED_FILE, image_mean=settings.ILSVRC_MEAN, full=False, make_net=True, feature_layer='fc7', crop_index=4, xDim=4096):
         super(CNN_Features_CAFFE_REFERENCE, self).__init__(storage)
         self.STORAGE_SUB_NAME = 'cnn_feature_caffe_reference'
         self.full = full
@@ -16,6 +16,7 @@ class CNN_Features_CAFFE_REFERENCE(BaseExtractor):
             self.STORAGE_SUB_NAME = 'cnn_feature_caffe_reference_full'
         self.feature_layer = feature_layer
         self.feature_crop_index = crop_index
+        self.xDim = xDim
         if self.full:
             self.full_length = settings.FULL_LENGTH
 
@@ -48,22 +49,27 @@ class CNN_Features_CAFFE_REFERENCE(BaseExtractor):
             instance_path = self.storage.get_instance_path(
                 self.STORAGE_SUPER_NAME, self.STORAGE_SUB_NAME, instance_name)
             if force or not self.storage.check_exists(instance_path):
-                im = caffe.io.load_image(t['img_file'])
-                if crop:
-                    assert bbox is not None
-                    # TODO: move to sepatate funciton
-                    x, y, w, h = bbox[int(t['img_id']) - 1]
-                    im = im[y:y+h, x:x+w]
+                try:
+                    im = caffe.io.load_image(t['img_file'])
+                    if crop:
+                        assert bbox is not None
+                        # TODO: move to sepatate funciton
+                        x, y, w, h = bbox[int(t['img_id']) - 1]
+                        im = im[y:y+h, x:x+w]
 
-                if flip:
-                    im = np.fliplr(im)
-                self.net.predict([im])
+                    if flip:
+                        im = np.fliplr(im)
+                    self.net.predict([im])
 
-                if self.full:
-                    des = self.net.blobs[self.feature_layer].data[:, :, 0, 0]
-                else:
-                    des = self.net.blobs[self.feature_layer].data[
-                        self.feature_crop_index][:, 0, 0]
+                    if self.full:
+                        des = self.net.blobs[self.feature_layer].data[:, :, 0, 0]
+                    else:
+                        des = self.net.blobs[self.feature_layer].data[
+                            self.feature_crop_index][:, 0, 0]
+                except IOError:
+                    # here for the missing images we put zero in their place.
+                    # it is not obvious that this is the best thing to do.
+                    des = self.dummy_extract_one(t['img_id'])
 
                 self.storage.save_instance(instance_path, des)
             else:
@@ -93,5 +99,7 @@ class CNN_Features_CAFFE_REFERENCE(BaseExtractor):
                     des = des[0, :]
             return des
 
-    def dummy_extract_one(self, img_id, xDim=4096):
+    def dummy_extract_one(self, img_id, xDim=None):
+        if xDim is None:
+            xDim = self.xDim
         return np.zeros(xDim)
