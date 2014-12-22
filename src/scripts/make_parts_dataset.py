@@ -30,9 +30,9 @@ def main(out_path):
         parts = cub_parts.for_image(image_id)
         head_parts = parts.filter_by_name(Parts.HEAD_PART_NAMES)
 
-        if len(head_parts) < 2:
+        if len(head_parts) <= 2:
             print "#parts:%d \tID:%d \tName:%s" % (len(head_parts), int(image_id), rel_image_path)
-            if len(head_parts) == 0:
+            if len(head_parts) <= 1:
                 continue
 
         part_image = head_parts.get_rect(o_image)
