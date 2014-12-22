@@ -1,4 +1,5 @@
 import cv2
+import numpy as np
 
 
 class Part(object):
@@ -108,6 +109,26 @@ class Parts(object):
         ymax = min(img.shape[1]-1, (c_x + w*mul/div))
 
         return img[xmin:xmax, ymin:ymax]
+
+    def get_gray_out_rect(self, img):
+        c_x, c_y = self.center()
+        c_x, c_y = int(c_x), int(c_y)
+        
+        w, h = self.bounding_width_height()
+        
+        mul = 2
+        div = 3
+
+        xmin = max(0, (c_y - h*mul/div))
+        xmax = min(img.shape[0]-1, (c_y + h*mul/div))
+        ymin = max(0, (c_x - w*mul/div))
+        ymax = min(img.shape[1]-1, (c_x + w*mul/div))
+
+        new_img = np.ones_like(img) * 0.5
+        new_img[xmin:xmax, ymin:ymax] = img[xmin:xmax, ymin:ymax]
+
+        return new_img
+
 
 class CUBParts(object):
 

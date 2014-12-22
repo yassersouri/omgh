@@ -35,7 +35,7 @@ def main(out_path):
             if len(head_parts) <= 1:
                 continue
 
-        part_image = head_parts.get_rect(o_image)
+        part_image = head_parts.get_gray_out_rect(o_image)
         if 0 in part_image.shape:
             print "#parts:%d \tID:%d \tName:%s + Shape:%s" % (len(head_parts), int(image_id), rel_image_path, str(part_image.shape))
         
