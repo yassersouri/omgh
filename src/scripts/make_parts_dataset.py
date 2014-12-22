@@ -25,19 +25,21 @@ def main(out_path):
         cub_parts = cub.get_parts()
 
         rel_image_path = image_path[len(settings.CUB_IMAGES_FOLDER):]
-        try:
-            o_image = caffe.io.load_image(image_path)
+        o_image = caffe.io.load_image(image_path)
 
-            parts = cub_parts.for_image(image_id)
-            head_parts = parts.filter_by_name(Parts.HEAD_PART_NAMES)
+        parts = cub_parts.for_image(image_id)
+        head_parts = parts.filter_by_name(Parts.HEAD_PART_NAMES)
 
-            part_image = head_parts.get_rect(o_image)
-            
-            out_image_path = os.path.join(out_path, rel_image_path)
-            utils.ensure_dir(os.path.dirname(out_image_path))
-            skimage.io.imsave(out_image_path, part_image)
-        except Exception, e:
-            print "%d - %s" % (int(image_id), rel_image_path)
+        if len(head_parts) < 2:
+            print "#parts:%d \tID:%d \tName:%s" % (len(head_parts), int(image_id), rel_image_path)
+            if len(head_parts) == 0:
+                continue
+
+        part_image = head_parts.get_rect(o_image)
+        
+        out_image_path = os.path.join(out_path, rel_image_path)
+        utils.ensure_dir(os.path.dirname(out_image_path))
+        skimage.io.imsave(out_image_path, part_image)
 
 
 if __name__ == '__main__':
