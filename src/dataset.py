@@ -240,6 +240,10 @@ class CUB_200_2011_Parts_Head(CUB_200_2011):
     IMAGES_FOLDER_NAME = 'images_head'
 
 
+class CUB_200_2011_Parts_Head_Gray(CUB_200_2011):
+    IMAGES_FOLDER_NAME = 'images_gray_head'
+
+
 class PASCAL_VOC_2006(Dataset):
     NAME = 'PASCAL_VOC_2006'
     ANNOTATIONS_FOLDER_NAME = 'Annotations'
