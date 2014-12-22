@@ -36,6 +36,8 @@ def main(out_path):
                 continue
 
         part_image = head_parts.get_rect(o_image)
+        if 0 in part_image.shape:
+            print "#parts:%d \tID:%d \tName:%s + Shape:%s" % (len(head_parts), int(image_id), rel_image_path, str(part_image.shape))
         
         out_image_path = os.path.join(out_path, rel_image_path)
         utils.ensure_dir(os.path.dirname(out_image_path))
