@@ -1,5 +1,6 @@
 import os
 import scipy.io
+import numpy as np
 
 
 class datastore(object):
@@ -24,6 +25,7 @@ class datastore(object):
 
     def get_instance_path(self, super_name, sub_name, instance_name):
         sub_folder = self.get_sub_folder(super_name, sub_name)
+        self.ensure_dir(sub_folder)
         return os.path.join(sub_folder, instance_name)
 
     def get_model_path(self, super_name, model_name):
@@ -50,3 +52,9 @@ class datastore(object):
     def load_full_instance(self, instance_path):
         instance = scipy.io.loadmat(instance_path)
         return instance
+
+    def save_large_instance(self, instance_path, instance, split_size):
+        instance_arrays = np.vsplit(instance, split_size)
+
+        for i, inst in enumerate(instance_arrays):
+            self.save_instance(instance_path + '_%d.mat' % i, inst)
