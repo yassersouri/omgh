@@ -13,13 +13,13 @@ from time import time
 @click.command()
 def main():
     storage_name = 'cache-cccftt'
-    layer = 'pool5'
+    layer = 'conv3'
     name = '%s-%s' % ('cccftt', 100000)
     normalize_feat = True
     n_neighbors = 1
 
-    A = 100
-    N = 100
+    A = 300
+    N = 20
 
     cub = CUB_200_2011(settings.CUB_ROOT)
 
