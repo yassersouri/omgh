@@ -1,9 +1,12 @@
 import os
 import scipy.io
 import numpy as np
+from glob import glob
 
 
 class datastore(object):
+
+    LARGE_FILE_FORMAT = '%s_%d.mat'
 
     def __init__(self, base_path, global_key='global_key'):
         self.base_path = base_path
@@ -57,4 +60,12 @@ class datastore(object):
         instance_arrays = np.vsplit(instance, split_size)
 
         for i, inst in enumerate(instance_arrays):
-            self.save_instance(instance_path + '_%d.mat' % i, inst)
+            self.save_instance(self.LARGE_FILE_FORMAT % (instance_path, i), inst)
+
+    def load_large_instance(self, instance_path, split_size):
+        instance_arrays = []
+
+        for i in range(split_size):
+            instance_arrays.append(self.load_instance(self.LARGE_FILE_FORMAT % (instance_path, i)))
+
+        return np.vstack(instance_arrays)
