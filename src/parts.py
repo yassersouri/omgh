@@ -102,7 +102,7 @@ class Parts(object):
         mul = 2
         div = 3
         new_img = copy.copy(img)
-        cv2.rectangle(new_img, (c_x - w*mul/div, c_y - h*mul/div), (c_x + w*mul/div, c_y + h*mul/div), (25, 125, 255))
+        cv2.rectangle(new_img, (c_x - w*mul/div, c_y - h*mul/div), (c_x + w*mul/div, c_y + h*mul/div), 100, 2)
         return new_img
 
     def get_rect(self, img):
