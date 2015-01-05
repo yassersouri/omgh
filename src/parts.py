@@ -30,7 +30,10 @@ class Parts(object):
     HEAD_PART_NAMES = ['beak', 'crown', 'forehead', 'nape', 'right eye', 'throat', 'left eye']
 
     def __init__(self, parts):
-        self.parts = parts
+        if hasattr(parts, '__iter__'):
+            self.parts = parts
+        else:
+            self.parts = [parts]
 
     def __len__(self):
         return len(self.parts)
@@ -44,6 +47,9 @@ class Parts(object):
 
     def __repr__(self):
         return self.__str__()
+
+    def __getitem__(self, key):
+        return self.parts[key]
 
     def filter_by_name(self, names):
         filtered_parts = []
@@ -86,20 +92,20 @@ class Parts(object):
     def draw_rect(self, img):
         c_x, c_y = self.center()
         c_x, c_y = int(c_x), int(c_y)
-        
+
         w, h = self.bounding_width_height()
-        
+
         mul = 2
         div = 3
-        
+
         cv2.rectangle(img, (c_x - w*mul/div, c_y - h*mul/div), (c_x + w*mul/div, c_y + h*mul/div), (25, 125, 255))
 
     def get_rect(self, img):
         c_x, c_y = self.center()
         c_x, c_y = int(c_x), int(c_y)
-        
+
         w, h = self.bounding_width_height()
-        
+
         mul = 2
         div = 3
 
@@ -113,9 +119,9 @@ class Parts(object):
     def get_gray_out_rect(self, img):
         c_x, c_y = self.center()
         c_x, c_y = int(c_x), int(c_y)
-        
+
         w, h = self.bounding_width_height()
-        
+
         mul = 2
         div = 3
 
