@@ -61,7 +61,7 @@ def main():
     toc = time() - tic
     print 'found in: ', toc
     print 'train ids'
-    print ', '.join([str(x) for x in NNS[0]])
+    print ', '.join([str(IDtrain[x]) for x in NNS[0]])
 
 
 if __name__ == '__main__':
