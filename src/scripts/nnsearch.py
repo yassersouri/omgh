@@ -13,13 +13,13 @@ from time import time
 @click.command()
 def main():
     storage_name = 'cache-cccftt'
-    layer = 'conv3'
+    layer = 'pool5'
     name = '%s-%s' % ('cccftt', 100000)
     normalize_feat = True
     n_neighbors = 1
 
-    A = 300
-    N = 20
+    A = 3300
+    N = 50
 
     cub = CUB_200_2011(settings.CUB_ROOT)
 
@@ -33,8 +33,10 @@ def main():
     # should we normalize the feats?
     if normalize_feat:
         # snippit from : http://stackoverflow.com/a/8904762/428321
-        row_sums = feat.sum(axis=1)
-        new_feat = feat / row_sums[:, np.newaxis]
+        # I've went for l2 normalization.
+        # row_sums = feat.sum(axis=1)
+        row_norms = np.linalg.norm(feat, axis=1)
+        new_feat = feat / row_norms[:, np.newaxis]
         feat = new_feat
 
     IDtrain, IDtest = cub.get_train_test_id()
