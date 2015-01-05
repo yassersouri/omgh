@@ -5,7 +5,6 @@ import numpy as np
 sys.path.append('/home/ipl/installs/caffe-rc/python/')
 import caffe
 import settings
-import utils
 from storage import datastore
 from dataset import CUB_200_2011
 import click
@@ -38,7 +37,6 @@ def main(model_name, iteration, storage_name):
     for layer, dim in zip(layer_names, layer_dims):
         instance[layer] = np.zeros((dataset_size, dim))
         print instance[layer].shape
-
 
     for i, info in enumerate(cub.get_all_images(cropped=True)):
         print info['img_id']
