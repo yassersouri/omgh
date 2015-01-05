@@ -1,5 +1,6 @@
 import cv2
 import numpy as np
+import copy
 
 
 class Part(object):
@@ -70,6 +71,9 @@ class Parts(object):
         return mean_x/len(self), mean_y/len(self)
 
     def bounding_width_height(self):
+        """
+        FIXME: I only now noticed that this is such and ugly code. Why not just use the min and max instead of writing them verbosly!
+        """
         min_x, max_x, min_y, max_y = 100000, 0, 100000, 0
 
         for part in self.parts:
@@ -97,8 +101,9 @@ class Parts(object):
 
         mul = 2
         div = 3
-
-        cv2.rectangle(img, (c_x - w*mul/div, c_y - h*mul/div), (c_x + w*mul/div, c_y + h*mul/div), (25, 125, 255))
+        new_img = copy.copy(img)
+        cv2.rectangle(new_img, (c_x - w*mul/div, c_y - h*mul/div), (c_x + w*mul/div, c_y + h*mul/div), (25, 125, 255))
+        return new_img
 
     def get_rect(self, img):
         c_x, c_y = self.center()
@@ -134,6 +139,38 @@ class Parts(object):
         new_img[xmin:xmax, ymin:ymax] = img[xmin:xmax, ymin:ymax]
 
         return new_img
+
+    def norm_for_bbox(self, bx, by):
+        for part in self.parts:
+            part.x = part.x - bx
+            part.y = part.y - by
+
+    def denorm_for_bbox(self, bx, by):
+        for part in self.parts:
+            part.x = part.x + bx
+            part.y = part.y + by
+
+    def norm_for_size(self, bw, bh, size=256):
+        size = float(size)
+        for part in self.parts:
+            part.x = int(round(part.x * size / bw))
+            part.y = int(round(part.y * size / bh))
+
+    def denorm_for_size(self, bw, bh, size=256):
+        size = float(size)
+        for part in self.parts:
+            part.x = int(round(part.x * bw / size))
+            part.y = int(round(part.y * bh / size))
+
+    def transfer(self, s_bbox, d_bbox, size=256):
+        new_parts = copy.deepcopy(self)
+        sbx, sby, sbw, sbh = int(s_bbox[0]), int(s_bbox[1]), int(s_bbox[2]), int(s_bbox[3])
+        dbx, dby, dbw, dbh = int(d_bbox[0]), int(d_bbox[1]), int(d_bbox[2]), int(d_bbox[3])
+        new_parts.norm_for_bbox(sbx, sby)
+        new_parts.norm_for_size(sbw, sbh)
+        new_parts.denorm_for_size(dbw, dbh)
+        new_parts.denorm_for_bbox(dbx, dby)
+        return new_parts
 
 
 class CUBParts(object):
@@ -174,4 +211,3 @@ class CUBParts(object):
             parts.append(Part(img_id, part_name, part_id, part_x, part_y, is_visible))
 
         return Parts(parts)
-
