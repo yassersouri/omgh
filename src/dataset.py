@@ -78,6 +78,15 @@ class CUB_200_2011(Dataset):
 
         return all_of_them[0]['img_file']
 
+    def get_all_image_infos(self):
+        all_infos = list(self.get_all_images())
+        the_hash = {}
+
+        for info in all_infos:
+            the_hash[int(info['img_id'])] = info['img_file']
+
+        return the_hash
+
     def gen_cropped_images(self):
         bbox = self.get_bbox()
         with open(self.images_file, 'r') as images_file:

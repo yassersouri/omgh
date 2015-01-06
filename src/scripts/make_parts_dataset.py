@@ -6,9 +6,7 @@ sys.path.append(settings.CAFFE_PYTHON_PATH)
 
 import skimage.io
 import caffe
-import numpy as np
 import click
-from glob import glob
 import utils
 from dataset import CUB_200_2011
 from parts import Parts
@@ -39,7 +37,7 @@ def main(out_path):
         if 0 in part_image.shape:
             print "#parts:%d \tID:%d \tName:%s + Shape:%s" % (len(head_parts), int(image_id), rel_image_path, str(part_image.shape))
             # continue
-        
+
         out_image_path = os.path.join(out_path, rel_image_path)
         utils.ensure_dir(os.path.dirname(out_image_path))
         skimage.io.imsave(out_image_path, part_image)

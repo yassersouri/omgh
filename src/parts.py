@@ -1,6 +1,7 @@
 import cv2
 import numpy as np
 import copy
+from itertools import ifilter
 
 
 class Part(object):
@@ -30,9 +31,11 @@ class Parts(object):
 
     HEAD_PART_NAMES = ['beak', 'crown', 'forehead', 'nape', 'right eye', 'throat', 'left eye']
 
-    def __init__(self, parts):
+    def __init__(self, parts=None):
         if hasattr(parts, '__iter__'):
             self.parts = parts
+        elif parts is None:
+            self.parts = []
         else:
             self.parts = [parts]
 
@@ -53,13 +56,7 @@ class Parts(object):
         return self.parts[key]
 
     def filter_by_name(self, names):
-        filtered_parts = []
-        for name in names:
-            for part in self.parts:
-                if part.is_part(name):
-                    filtered_parts.append(part)
-
-        return Parts(filtered_parts)
+        return Parts(list(ifilter(lambda part: part.part_name in names, self.parts)))
 
     def center(self):
         mean_x, mean_y = 0., 0.
@@ -171,6 +168,20 @@ class Parts(object):
         new_parts.denorm_for_size(dbw, dbh)
         new_parts.denorm_for_bbox(dbx, dby)
         return new_parts
+
+    def append(self, part):
+        self.parts.append(part)
+
+    def appends(self, parts):
+        for part in parts:
+            self.append(part)
+
+    def for_image(self, img_id):
+        return Parts(list(ifilter(lambda part: part.img_id == img_id, self.parts)))
+
+    def set_for(self, img_id):
+        for part in self.parts:
+            part.img_id = img_id
 
 
 class CUBParts(object):
