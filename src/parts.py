@@ -117,6 +117,11 @@ class Parts(object):
             if noise_std_d > 0:
                 w += np.random.normal(0, noise_std_d)
                 h += np.random.normal(0, noise_std_d)
+                # just to prevent things from breaking
+                if w < 3:
+                    w = 3
+                if h < 3:
+                    h = 3
         xmin = int(max(0, (c_y - h * alpha)))
         xmax = int(min(img.shape[0] - 1, (c_y + h * alpha)))
         ymin = int(max(0, (c_x - w * alpha)))
