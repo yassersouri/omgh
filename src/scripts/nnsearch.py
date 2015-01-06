@@ -18,13 +18,19 @@ import caffe
 
 
 @click.command()
-def main():
-    storage_name = 'cache-cccftt'
-    layer = 'pool5'
-    name = '%s-%s' % ('cccftt', 100000)
-    normalize_feat = True
-    n_neighbors = 1
-    feat_layer = 'fc7'  # obviously changing this only here will make things break
+@click.option('--storage_name', default='cache-cccftt')
+@click.option('--layer', default='pool5')
+@click.option('--model', default='cccftt')
+@click.option('--iteration', type=click.INT, default=100000)
+@click.option('--normalize_feat', type=click.BOOL, default=True)
+@click.option('--n_neighbors', type=click.INT, default=1)
+@click.option('--feat_layer', default='fc7')
+@click.option('--add_noise', type=click.BOOL, default=True)
+@click.option('--to_oracle', type=click.BOOL, default=True)
+@click.option('--noise_std_c', type=click.FLOAT, default=20.0)
+@click.option('--noise_std_d', type=click.FLOAT, default=20.0)
+def main(storage_name, layer, model, iteration, normalize_feat, n_neighbors, feat_layer, add_noise, to_oracle, noise_std_c, noise_std_d):
+    name = '%s-%s' % (model, iteration)
 
     nn_storage_name = 'nn-parts'
     nn_storage = datastore(settings.storage(nn_storage_name))
@@ -124,17 +130,19 @@ def main():
     net.set_phase_test()
     net.set_mode_gpu()
 
-    # load estimated head data
+    # compute estimated head data
     new_Xtest_p_h = np.zeros(Xtest_p_h.shape)
 
     for i, t_id in enumerate(IDtest):
         print t_id,
-
-        t_parts = estimated_test_parts.for_image(t_id)
+        if add_noise and to_oracle:
+            t_parts = all_parts_cub.for_image(t_id)
+        else:
+            t_parts = estimated_test_parts.for_image(t_id)
         t_img_addr = all_image_infos[t_id]
         t_img = caffe.io.load_image(t_img_addr)
         t_parts_head = t_parts.filter_by_name(Parts.HEAD_PART_NAMES)
-        t_img_head = t_parts_head.get_rect(t_img)
+        t_img_head = t_parts_head.get_rect(t_img, add_noise=add_noise, noise_std_c=noise_std_c, noise_std_d=noise_std_d)
         net.predict([t_img_head], oversample=False)
         new_Xtest_p_h[i, :] = net.blobs[feat_layer].data[0].flatten()
 
@@ -152,6 +160,10 @@ def main():
     toc = time() - tic
 
     print 'classified in', toc
+    print '--------------------'
+    print 'add_noise', add_noise
+    print 'to_oracle', to_oracle
+    print 'noises, c: %f, d: %f' % (noise_std_c, noise_std_d)
     print '--------------------'
     print 'accuracy', sklearn.metrics.accuracy_score(ytest_r, predictions)
     print 'mean accuracy', utils.mean_accuracy(ytest_r, predictions)
