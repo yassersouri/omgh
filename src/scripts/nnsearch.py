@@ -25,10 +25,10 @@ import caffe
 @click.option('--normalize_feat', type=click.BOOL, default=True)
 @click.option('--n_neighbors', type=click.INT, default=1)
 @click.option('--feat_layer', default='fc7')
-@click.option('--add_noise', type=click.BOOL, default=True)
+@click.option('--add_noise', type=click.BOOL, default=False)
 @click.option('--to_oracle', type=click.BOOL, default=True)
-@click.option('--noise_std_c', type=click.FLOAT, default=20.0)
-@click.option('--noise_std_d', type=click.FLOAT, default=20.0)
+@click.option('--noise_std_c', type=click.FLOAT, default=5.)
+@click.option('--noise_std_d', type=click.FLOAT, default=5.)
 def main(storage_name, layer, model, iteration, normalize_feat, n_neighbors, feat_layer, add_noise, to_oracle, noise_std_c, noise_std_d):
     name = '%s-%s' % (model, iteration)
 
@@ -64,7 +64,10 @@ def main(storage_name, layer, model, iteration, normalize_feat, n_neighbors, fea
     Xtrain = feat[IDtrain-1, :]
     Xtest = feat[IDtest-1, :]
 
+    print 'init load done'
+
     if not nn_storage.check_exists(nn_storage.instance_path):
+        print 'calculating'
         # the actual NN search
         nn_model = sklearn.neighbors.NearestNeighbors(n_neighbors=n_neighbors, algorithm='ball_tree', metric='minkowski', p=2)
         tic = time()
@@ -80,6 +83,7 @@ def main(storage_name, layer, model, iteration, normalize_feat, n_neighbors, fea
     else:
         # load the NNS
         NNS = nn_storage.load_instance(nn_storage.instance_path)
+        print 'loaded'
 
     # convert (N, 1) to (N,)
     NNS = NNS.T[0]
@@ -133,8 +137,9 @@ def main(storage_name, layer, model, iteration, normalize_feat, n_neighbors, fea
     # compute estimated head data
     new_Xtest_p_h = np.zeros(Xtest_p_h.shape)
 
+    tic = time()
     for i, t_id in enumerate(IDtest):
-        if add_noise and to_oracle:
+        if to_oracle:
             t_parts = all_parts_cub.for_image(t_id)
         else:
             t_parts = estimated_test_parts.for_image(t_id)
@@ -146,6 +151,9 @@ def main(storage_name, layer, model, iteration, normalize_feat, n_neighbors, fea
         new_Xtest_p_h[i, :] = net.blobs[feat_layer].data[0].flatten()
 
     Xtest_p_h = new_Xtest_p_h
+    toc = time() - tic
+    print 'feature calculation in', toc
+
     # make the final feature vector
     Xtrain = np.concatenate((Xtrain_r, Xtrain_c, Xtrain_p_h), axis=1)
     Xtest = np.concatenate((Xtest_r, Xtest_c, Xtest_p_h), axis=1)
