@@ -25,7 +25,8 @@ STORAGE_NAMES = {
     'ccfft': 'cub-caffe-features-flipped-ft',
     'ccfcft': 'cub-caffe-features-flipped-cropped-ft',
     'ccsc': 'cub-caffe-features-segmented-cropped',
-    'cache-cccftt': 'cache-cccftt'
+    'cache-cccftt': 'cache-cccftt',
+    'nn-parts': 'nn-parts'
 }
 
 MODEL_NAMES = {

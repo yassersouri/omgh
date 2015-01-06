@@ -24,7 +24,14 @@ def main():
     name = '%s-%s' % ('cccftt', 100000)
     normalize_feat = True
     n_neighbors = 1
-    feat_layer = 'fc7'  # obviously changing this only here will make things worse
+    feat_layer = 'fc7'  # obviously changing this only here will make things break
+
+    nn_storage_name = 'nn-parts'
+    nn_storage = datastore(settings.storage(nn_storage_name))
+    nn_storage.super_name = '%s_%s' % (storage_name, name)
+    nn_storage.sub_name = layer
+    nn_storage.instance_name = 'norm_%s.mat' % str(normalize_feat)
+    nn_storage.instance_path = nn_storage.get_instance_path(nn_storage.super_name, nn_storage.sub_name, nn_storage.instance_name)
 
     cub = CUB_200_2011(settings.CUB_ROOT)
     cub_part_head = CUB_200_2011_Parts_Head(settings.CUB_ROOT)
@@ -51,17 +58,22 @@ def main():
     Xtrain = feat[IDtrain-1, :]
     Xtest = feat[IDtest-1, :]
 
-    # the actual NN search
-    nn_model = sklearn.neighbors.NearestNeighbors(n_neighbors=n_neighbors, algorithm='ball_tree', metric='minkowski', p=2)
-    tic = time()
-    nn_model.fit(Xtrain)
-    toc = time() - tic
-    print 'fitted in: ', toc
+    if not nn_storage.check_exists(nn_storage.instance_path):
+        # the actual NN search
+        nn_model = sklearn.neighbors.NearestNeighbors(n_neighbors=n_neighbors, algorithm='ball_tree', metric='minkowski', p=2)
+        tic = time()
+        nn_model.fit(Xtrain)
+        toc = time() - tic
+        print 'fitted in: ', toc
 
-    tic = time()
-    NNS = nn_model.kneighbors(Xtest, 1, return_distance=False)
-    toc = time() - tic
-    print 'found in: ', toc
+        tic = time()
+        NNS = nn_model.kneighbors(Xtest, 1, return_distance=False)
+        toc = time() - tic
+        print 'found in: ', toc
+        nn_storage.save_instance(nn_storage.instance_path, NNS)
+    else:
+        # load the NNS
+        NNS = nn_storage.load_instance(nn_storage.instance_path)
 
     # convert (N, 1) to (N,)
     NNS = NNS.T[0]
