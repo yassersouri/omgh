@@ -173,6 +173,7 @@ def main(storage_name, layer, model, iteration, normalize_feat, n_neighbors, fea
     print '--------------------'
     print 'accuracy', sklearn.metrics.accuracy_score(ytest_r, predictions)
     print 'mean accuracy', utils.mean_accuracy(ytest_r, predictions)
+    print '===================='
 
 if __name__ == '__main__':
     main()
