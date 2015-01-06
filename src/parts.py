@@ -102,19 +102,25 @@ class Parts(object):
         cv2.rectangle(new_img, (c_x - w*mul/div, c_y - h*mul/div), (c_x + w*mul/div, c_y + h*mul/div), 100, 2)
         return new_img
 
-    def get_rect(self, img):
+    def get_rect(self, img, alpha=0.6666, add_noise=False, noise_std_c=5.0, noise_std_d=10.0):
         c_x, c_y = self.center()
+        if add_noise:
+            # add noise here
+            if noise_std_c > 0:
+                c_x += np.random.normal(0, noise_std_c)
+                c_y += np.random.normal(0, noise_std_c)
         c_x, c_y = int(c_x), int(c_y)
 
         w, h = self.bounding_width_height()
-
-        mul = 2
-        div = 3
-
-        xmin = max(0, (c_y - h*mul/div))
-        xmax = min(img.shape[0]-1, (c_y + h*mul/div))
-        ymin = max(0, (c_x - w*mul/div))
-        ymax = min(img.shape[1]-1, (c_x + w*mul/div))
+        if add_noise:
+            # add noise here
+            if noise_std_d > 0:
+                w += np.random.normal(0, noise_std_d)
+                h += np.random.normal(0, noise_std_d)
+        xmin = int(max(0, (c_y - h * alpha)))
+        xmax = int(min(img.shape[0] - 1, (c_y + h * alpha)))
+        ymin = int(max(0, (c_x - w * alpha)))
+        ymax = int(min(img.shape[1] - 1, (c_x + w * alpha)))
 
         return img[xmin:xmax, ymin:ymax]
 
