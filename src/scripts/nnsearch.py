@@ -147,7 +147,7 @@ def main(storage_name, layer, model, iteration, normalize_feat, n_neighbors, fea
         new_Xtest_p_h[i, :] = net.blobs[feat_layer].data[0].flatten()
 
     Xtest_p_h = new_Xtest_p_h
-
+    print ''
     # make the final feature vector
     Xtrain = np.concatenate((Xtrain_r, Xtrain_c, Xtrain_p_h), axis=1)
     Xtest = np.concatenate((Xtest_r, Xtest_c, Xtest_p_h), axis=1)
