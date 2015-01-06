@@ -1,7 +1,6 @@
 import os
 import scipy.io
 import numpy as np
-from glob import glob
 
 
 class datastore(object):
