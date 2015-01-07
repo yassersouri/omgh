@@ -29,7 +29,10 @@ import caffe
 @click.option('--to_oracle', type=click.BOOL, default=True)
 @click.option('--noise_std_c', type=click.FLOAT, default=5.)
 @click.option('--noise_std_d', type=click.FLOAT, default=5.)
-def main(storage_name, layer, model, iteration, normalize_feat, n_neighbors, feat_layer, add_noise, to_oracle, noise_std_c, noise_std_d):
+@click.option('--augment_training', type=click.BOOL, default=False)
+@click.option('--augmentation_fold', type=click.INT, default=2)
+@click.option('--augmentation_noise', type=click.FLOAT, default=5.0)
+def main(storage_name, layer, model, iteration, normalize_feat, n_neighbors, feat_layer, add_noise, to_oracle, noise_std_c, noise_std_d, augment_training, augmentation_fold, augmentation_noise):
     name = '%s-%s' % (model, iteration)
 
     nn_storage_name = 'nn-parts'
@@ -157,6 +160,29 @@ def main(storage_name, layer, model, iteration, normalize_feat, n_neighbors, fea
     # make the final feature vector
     Xtrain = np.concatenate((Xtrain_r, Xtrain_c, Xtrain_p_h), axis=1)
     Xtest = np.concatenate((Xtest_r, Xtest_c, Xtest_p_h), axis=1)
+
+    print Xtrain.shape, Xtest.shape
+
+    # training augmentation
+    if augment_training:
+        Xtrain_heads = []
+        for fold in range(augmentation_fold):
+            print 'augmentation_fold', fold
+            new_Xtrain_p_h = np.zeros(Xtrain_p_h.shape)
+            for i, t_id in enumerate(IDtrain):
+                t_parts = all_parts_cub.for_image(t_id)
+                t_img_addr = all_image_infos[t_id]
+                t_img = caffe.io.load_image(t_img_addr)
+                t_parts_head = t_parts.filter_by_name(Parts.HEAD_PART_NAMES)
+                t_img_head = t_parts_head.get_rect(t_img, add_noise=True, noise_std_c=augmentation_noise, noise_std_d=augmentation_noise)
+                net.predict([t_img_head], oversample=False)
+                new_Xtrain_p_h[i, :] = net.blobs[feat_layer].data[0].flatten()
+            Xtrain_heads.append(new_Xtrain_p_h)
+
+        for fold in range(augmentation_fold):
+            Xtrain = np.concatenate((Xtrain, np.concatenate((Xtrain_r, Xtrain_c, Xtrain_heads[fold]), axis=1)), axis=0)
+
+    print Xtrain.shape, Xtest.shape
 
     # do classification
     tic = time()
