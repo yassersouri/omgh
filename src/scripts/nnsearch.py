@@ -160,6 +160,7 @@ def main(storage_name, layer, model, iteration, normalize_feat, n_neighbors, fea
     # make the final feature vector
     Xtrain = np.concatenate((Xtrain_r, Xtrain_c, Xtrain_p_h), axis=1)
     Xtest = np.concatenate((Xtest_r, Xtest_c, Xtest_p_h), axis=1)
+    ytrain = ytrain_r
 
     print Xtrain.shape, Xtest.shape
 
@@ -181,24 +182,24 @@ def main(storage_name, layer, model, iteration, normalize_feat, n_neighbors, fea
 
         for fold in range(augmentation_fold):
             Xtrain = np.concatenate((Xtrain, np.concatenate((Xtrain_r, Xtrain_c, Xtrain_heads[fold]), axis=1)), axis=0)
+            ytrain = np.concatenate((ytrain, ytrain_r))
 
     print Xtrain.shape, Xtest.shape
 
     # do classification
     tic = time()
     model = sklearn.svm.LinearSVC(C=0.0001)
-    model.fit(Xtrain, ytrain_r)
+    model.fit(Xtrain, ytrain)
     predictions = model.predict(Xtest)
     toc = time() - tic
 
     print 'classified in', toc
     print '--------------------'
-    print 'add_noise', add_noise
-    print 'to_oracle', to_oracle
+    print 'add_noise', add_noise, 'to_oracle', to_oracle
+    print 'augment_training', augment_training, 'augmentation_noise', augmentation_noise
     print 'noises, c: %f, d: %f' % (noise_std_c, noise_std_d)
     print '--------------------'
-    print 'accuracy', sklearn.metrics.accuracy_score(ytest_r, predictions)
-    print 'mean accuracy', utils.mean_accuracy(ytest_r, predictions)
+    print 'accuracy', sklearn.metrics.accuracy_score(ytest_r, predictions), 'mean accuracy', utils.mean_accuracy(ytest_r, predictions)
     print '===================='
 
 if __name__ == '__main__':
