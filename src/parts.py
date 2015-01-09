@@ -65,6 +65,8 @@ class Parts(object):
             mean_x += part.x
             mean_y += part.y
 
+        if len(self) == 0:
+            return 0, 0
         return mean_x/len(self), mean_y/len(self)
 
     def bounding_width_height(self):
@@ -104,6 +106,10 @@ class Parts(object):
 
     def get_rect(self, img, alpha=0.6666, add_noise=False, noise_std_c=5.0, noise_std_d=10.0):
         c_x, c_y = self.center()
+        # if we actually have no choice
+        if c_x == 0 and c_y == 0:
+            c_x = img.shape[1]/2.0
+            c_y = img.shape[0]/2.0
         if add_noise:
             # add noise here
             if noise_std_c > 0:
