@@ -31,7 +31,7 @@ def main(cub_path, seg_path, out_path):
         # The following line could be improved when we can use the imagenet
         # mean file
         background = np.ones_like(s_image) * 0.5
-        threshold = np.median(s_image) # one could use anything else, like max or min!
+        threshold = np.median(s_image)  # one could use anything else, like max or min!
 
         so_image = np.where(s_image <= threshold, background, o_image)
         out_image_path = os.path.join(out_path, rel_image_path)
