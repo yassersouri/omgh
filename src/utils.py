@@ -1,6 +1,7 @@
 import numpy
 import sklearn.metrics
 import os
+import cv2
 
 
 def mean_accuracy(groundtruth, predictions):
@@ -12,3 +13,10 @@ def mean_accuracy(groundtruth, predictions):
 def ensure_dir(address):
     if not os.path.exists(address):
         os.makedirs(address)
+
+
+def draw_bbox(img, bbox):
+        bx, by, bw, bh = int(bbox[0]), int(bbox[1]), int(bbox[2]), int(bbox[3])
+        new_img = img.copy()
+        cv2.rectangle(new_img, (bx, by), (bx+bw, by+bh), 100, 2)
+        return new_img
