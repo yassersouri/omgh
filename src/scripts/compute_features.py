@@ -2,7 +2,7 @@ import sys
 import os
 sys.path.append(os.path.dirname(os.path.dirname(__file__)))
 import settings
-from dataset import CUB_200_2011, CUB_200_2011_Segmented, CUB_200_2011_Parts_Head
+from dataset import CUB_200_2011, CUB_200_2011_Segmented, CUB_200_2011_Parts_Head, CUB_200_2011_Parts_Body
 from storage import datastore
 from deep_extractor import CNN_Features_CAFFE_REFERENCE
 import pyprind
@@ -16,7 +16,7 @@ import click
 @click.option('--full', type=click.BOOL, default=False)
 @click.option('--flipped', type=click.BOOL, default=False)
 @click.option('--force', type=click.BOOL, default=False)
-@click.option('--dataset', default='regular', type=click.Choice(['regular', 'segmented', 'part-head']))
+@click.option('--dataset', default='regular', type=click.Choice(['regular', 'segmented', 'part-head', 'part-body']))
 @click.option('--storage-name', default='')
 def main(sname, iteration, cropped, full, flipped, force, dataset, storage_name):
     new_name = '%s-%d' % (sname, iteration)
@@ -24,6 +24,8 @@ def main(sname, iteration, cropped, full, flipped, force, dataset, storage_name)
         cub = CUB_200_2011_Segmented(settings.CUB_ROOT, full=full)
     elif dataset == 'part-head':
         cub = CUB_200_2011_Parts_Head(settings.CUB_ROOT, full=full)
+    elif dataset == 'part-body':
+        cub = CUB_200_2011_Parts_Body(settings.CUB_ROOT, full=full)
     else:
         cub = CUB_200_2011(settings.CUB_ROOT, full=full)
     if not storage_name:
