@@ -28,8 +28,6 @@ def main(out_path):
 
         if len(p_parts) <= 2:
             print "#parts:%d \tID:%d \tName:%s" % (len(p_parts), int(image_id), rel_image_path)
-            if len(p_parts) <= 1:
-                continue
 
         part_image = p_parts.get_rect(o_image, alpha=0.6)
 
