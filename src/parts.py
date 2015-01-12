@@ -30,6 +30,7 @@ class Part(object):
 class Parts(object):
 
     HEAD_PART_NAMES = ['beak', 'crown', 'forehead', 'nape', 'right eye', 'throat', 'left eye']
+    BODY_PART_NAMES = ['back', 'belly', 'breast', 'left leg', 'left wing', 'right leg', 'right wing', 'tail']
 
     def __init__(self, parts=None):
         if hasattr(parts, '__iter__'):
@@ -92,19 +93,7 @@ class Parts(object):
         for part in self:
             ax.plot(part.x, part.y, 'o')
 
-    def draw_rect(self, img):
-        c_x, c_y = self.center()
-        c_x, c_y = int(c_x), int(c_y)
-
-        w, h = self.bounding_width_height()
-
-        mul = 2
-        div = 3
-        new_img = img.copy()
-        cv2.rectangle(new_img, (c_x - w*mul/div, c_y - h*mul/div), (c_x + w*mul/div, c_y + h*mul/div), 100, 2)
-        return new_img
-
-    def get_rect(self, img, alpha=0.6666, add_noise=False, noise_std_c=5.0, noise_std_d=10.0):
+    def get_rect_info(self, img, alpha=0.6666, add_noise=False, noise_std_c=5.0, noise_std_d=10.0):
         c_x, c_y = self.center()
         # if we actually have no choice
         if c_x == 0 and c_y == 0:
@@ -124,14 +113,26 @@ class Parts(object):
                 w += np.random.normal(0, noise_std_d)
                 h += np.random.normal(0, noise_std_d)
         # just to prevent things from breaking
-        if w < 3:
-            w = 3
-        if h < 3:
-            h = 3
+        if w < 10:
+            w = 10
+        if h < 10:
+            h = 10
         xmin = int(max(0, (c_y - h * alpha)))
         xmax = int(min(img.shape[0] - 1, (c_y + h * alpha)))
         ymin = int(max(0, (c_x - w * alpha)))
         ymax = int(min(img.shape[1] - 1, (c_x + w * alpha)))
+
+        return xmin, xmax, ymin, ymax
+
+    def draw_rect(self, img, alpha=0.6666, color=100, width=2):
+        xmin, xmax, ymin, ymax = self.get_rect_info(img, alpha)
+        new_img = img.copy()
+        # because opencv doesn't use the sane convention
+        cv2.rectangle(new_img, (ymin, xmin), (ymax, xmax), color, width)
+        return new_img
+
+    def get_rect(self, img, alpha=0.6666, add_noise=False, noise_std_c=5.0, noise_std_d=10.0):
+        xmin, xmax, ymin, ymax = self.get_rect_info(img, alpha, add_noise, noise_std_c, noise_std_d)
 
         return img[xmin:xmax, ymin:ymax]
 
