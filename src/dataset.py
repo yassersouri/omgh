@@ -249,6 +249,10 @@ class CUB_200_2011_Parts_Head(CUB_200_2011):
     IMAGES_FOLDER_NAME = 'images_head'
 
 
+class CUB_200_2011_Parts_Body(CUB_200_2011):
+    IMAGES_FOLDER_NAME = 'images_body'
+
+
 class CUB_200_2011_Parts_Head_Gray(CUB_200_2011):
     IMAGES_FOLDER_NAME = 'images_gray_head'
 
