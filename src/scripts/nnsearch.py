@@ -5,7 +5,7 @@ import settings
 import utils
 sys.path.append(settings.CAFFE_PYTHON_PATH)
 from storage import datastore
-from dataset import CUB_200_2011, CUB_200_2011_Parts_Head
+from dataset import CUB_200_2011
 from deep_extractor import CNN_Features_CAFFE_REFERENCE
 from parts import Parts
 import click
@@ -24,6 +24,7 @@ import caffe
 @click.option('--iteration', type=click.INT, default=100000)
 @click.option('--normalize_feat', type=click.BOOL, default=True)
 @click.option('--n_neighbors', type=click.INT, default=1)
+@click.option('--parts', type=click.Choice(['head', 'body']), multiple=True)
 @click.option('--feat_layer', default='fc7')
 @click.option('--add_noise', type=click.BOOL, default=False)
 @click.option('--to_oracle', type=click.BOOL, default=True)
@@ -32,7 +33,11 @@ import caffe
 @click.option('--augment_training', type=click.BOOL, default=False)
 @click.option('--augmentation_fold', type=click.INT, default=2)
 @click.option('--augmentation_noise', type=click.FLOAT, default=5.0)
-def main(storage_name, layer, model, iteration, normalize_feat, n_neighbors, feat_layer, add_noise, to_oracle, noise_std_c, noise_std_d, augment_training, augmentation_fold, augmentation_noise):
+def main(storage_name, layer, model, iteration, normalize_feat, n_neighbors, parts, feat_layer, add_noise, to_oracle, noise_std_c, noise_std_d, augment_training, augmentation_fold, augmentation_noise):
+    if len(parts) == 0:
+        print 'no parts where needed'
+        exit()
+
     name = '%s-%s' % (model, iteration)
 
     nn_storage_name = 'nn-parts'
@@ -43,7 +48,6 @@ def main(storage_name, layer, model, iteration, normalize_feat, n_neighbors, fea
     nn_storage.instance_path = nn_storage.get_instance_path(nn_storage.super_name, nn_storage.sub_name, nn_storage.instance_name)
 
     cub = CUB_200_2011(settings.CUB_ROOT)
-    cub_part_head = CUB_200_2011_Parts_Head(settings.CUB_ROOT)
 
     safe = datastore(settings.storage(storage_name))
     safe.super_name = 'features'
@@ -122,44 +126,68 @@ def main(storage_name, layer, model, iteration, normalize_feat, n_neighbors, fea
     features_storage_c = datastore(settings.storage('cccft'))
     feature_extractor_c = CNN_Features_CAFFE_REFERENCE(features_storage_c, make_net=False)
 
-    features_storage_p_h = datastore(settings.storage('ccpheadft-100000'))
-    feature_extractor_p_h = CNN_Features_CAFFE_REFERENCE(features_storage_p_h, make_net=False)
+    if 'head' in parts:
+        features_storage_p_h = datastore(settings.storage('ccpheadft-100000'))
+        feature_extractor_p_h = CNN_Features_CAFFE_REFERENCE(features_storage_p_h, make_net=False)
+
+    if 'body' in parts:
+        features_storage_p_b = datastore(settings.storage('ccpbodyft-100000'))
+        feature_extractor_p_b = CNN_Features_CAFFE_REFERENCE(features_storage_p_b, make_net=False)
 
     Xtrain_r, ytrain_r, Xtest_r, ytest_r = cub.get_train_test(feature_extractor_r.extract_one)
     Xtrain_c, ytrain_c, Xtest_c, ytest_c = cub.get_train_test(feature_extractor_c.extract_one)
-    Xtrain_p_h, ytrain_p_h, Xtest_p_h, ytest_p_h = cub_part_head.get_train_test(feature_extractor_p_h.extract_one)
+
+    if 'head' in parts:
+        Xtrain_p_h, ytrain_p_h, Xtest_p_h, ytest_p_h = cub.get_train_test(feature_extractor_p_h.extract_one)
+    if 'body' in parts:
+        Xtrain_p_b, ytrain_p_b, Xtest_p_b, ytest_p_b = cub.get_train_test(feature_extractor_p_b.extract_one)
+
     toc = time() - tic
     print 'loaded data in', toc
 
-    # load caffe network
-    name = 'ccpheadft-100000'
-    net = caffe.Classifier(settings.model(name), settings.pretrained(name), mean=np.load(settings.ILSVRC_MEAN), channel_swap=(2, 1, 0), raw_scale=255)
-    net.set_phase_test()
-    net.set_mode_gpu()
+    def compute_estimated_part_data(model_name, shape, IDS, part_names_to_filter, add_noise, noise_std_c, noise_std_d):
+        net = caffe.Classifier(settings.model(model_name), settings.pretrained(model_name), mean=np.load(settings.ILSVRC_MEAN), channel_swap=(2, 1, 0), raw_scale=255)
+        net.set_phase_test()
+        net.set_mode_gpu()
+
+        # compute estimated head data
+        new_Xtest_part = np.zeros(shape)
+
+        for i, t_id in enumerate(IDS):
+            if to_oracle:
+                t_parts = all_parts_cub.for_image(t_id)
+            else:
+                t_parts = estimated_test_parts.for_image(t_id)
+            t_img_addr = all_image_infos[t_id]
+            t_img = caffe.io.load_image(t_img_addr)
+            t_parts_part = t_parts.filter_by_name(part_names_to_filter)
+            t_img_part = t_parts_part.get_rect(t_img, add_noise=add_noise, noise_std_c=noise_std_c, noise_std_d=noise_std_d)
+            net.predict([t_img_part], oversample=False)
+            new_Xtest_part[i, :] = net.blobs[feat_layer].data[0].flatten()
+
+        return new_Xtest_part
 
     # compute estimated head data
-    new_Xtest_p_h = np.zeros(Xtest_p_h.shape)
-
     tic = time()
-    for i, t_id in enumerate(IDtest):
-        if to_oracle:
-            t_parts = all_parts_cub.for_image(t_id)
-        else:
-            t_parts = estimated_test_parts.for_image(t_id)
-        t_img_addr = all_image_infos[t_id]
-        t_img = caffe.io.load_image(t_img_addr)
-        t_parts_head = t_parts.filter_by_name(Parts.HEAD_PART_NAMES)
-        t_img_head = t_parts_head.get_rect(t_img, add_noise=add_noise, noise_std_c=noise_std_c, noise_std_d=noise_std_d)
-        net.predict([t_img_head], oversample=False)
-        new_Xtest_p_h[i, :] = net.blobs[feat_layer].data[0].flatten()
-
-    Xtest_p_h = new_Xtest_p_h
+    if 'head' in parts:
+        Xtest_p_h = compute_estimated_part_data('ccpheadft-100000', Xtest_p_h.shape, IDtest, Parts.HEAD_PART_NAMES, add_noise, noise_std_c, noise_std_d)
+    if 'body' in parts:
+        Xtest_p_b = compute_estimated_part_data('ccpbodyft-100000', Xtest_p_b.shape, IDtest, Parts.BODY_PART_NAMES, add_noise, noise_std_c, noise_std_d)
     toc = time() - tic
     print 'feature calculation in', toc
 
     # make the final feature vector
-    Xtrain = np.concatenate((Xtrain_r, Xtrain_c, Xtrain_p_h), axis=1)
-    Xtest = np.concatenate((Xtest_r, Xtest_c, Xtest_p_h), axis=1)
+    train_tuple = (Xtrain_r, Xtrain_c)
+    test_tuple = (Xtest_r, Xtest_c)
+    if 'head' in parts:
+        train_tuple = train_tuple + (Xtrain_p_h,)
+        test_tuple = test_tuple + (Xtest_p_h,)
+    if 'body' in parts:
+        train_tuple = train_tuple + (Xtrain_p_b,)
+        test_tuple = test_tuple + (Xtest_p_b,)
+
+    Xtrain = np.concatenate(train_tuple, axis=1)
+    Xtest = np.concatenate(test_tuple, axis=1)
     ytrain = ytrain_r
 
     print Xtrain.shape, Xtest.shape
@@ -167,21 +195,23 @@ def main(storage_name, layer, model, iteration, normalize_feat, n_neighbors, fea
     # training augmentation
     if augment_training:
         Xtrain_heads = []
+        Xtrain_bodies = []
         for fold in range(augmentation_fold):
             print 'augmentation_fold', fold
-            new_Xtrain_p_h = np.zeros(Xtrain_p_h.shape)
-            for i, t_id in enumerate(IDtrain):
-                t_parts = all_parts_cub.for_image(t_id)
-                t_img_addr = all_image_infos[t_id]
-                t_img = caffe.io.load_image(t_img_addr)
-                t_parts_head = t_parts.filter_by_name(Parts.HEAD_PART_NAMES)
-                t_img_head = t_parts_head.get_rect(t_img, add_noise=True, noise_std_c=augmentation_noise, noise_std_d=augmentation_noise)
-                net.predict([t_img_head], oversample=False)
-                new_Xtrain_p_h[i, :] = net.blobs[feat_layer].data[0].flatten()
-            Xtrain_heads.append(new_Xtrain_p_h)
+            if 'head' in parts:
+                new_Xtrain_p_h = compute_estimated_part_data('ccpheadft-100000', Xtrain_p_h.shape, IDtrain, Parts.HEAD_PART_NAMES, add_noise=True, noise_std_c=augmentation_noise, noise_std_d=augmentation_noise)
+                Xtrain_heads.append(new_Xtrain_p_h)
+            if 'body' in parts:
+                new_Xtrain_p_b = compute_estimated_part_data('ccpbodyft-100000', Xtrain_p_b.shape, IDtrain, Parts.BODY_PART_NAMES, add_noise=True, noise_std_c=augmentation_noise, noise_std_d=augmentation_noise)
+                Xtrain_bodies.append(new_Xtrain_p_b)
 
         for fold in range(augmentation_fold):
-            Xtrain = np.concatenate((Xtrain, np.concatenate((Xtrain_r, Xtrain_c, Xtrain_heads[fold]), axis=1)), axis=0)
+            train_tuple = (Xtrain_r, Xtrain_c)
+            if 'head' in parts:
+                train_tuple = train_tuple + (Xtrain_heads[fold],)
+            if 'body' in parts:
+                train_tuple = train_tuple + (Xtrain_bodies[fold],)
+            Xtrain = np.concatenate((Xtrain, np.concatenate(train_tuple, axis=1)), axis=0)
             ytrain = np.concatenate((ytrain, ytrain_r))
 
     print Xtrain.shape, Xtest.shape
@@ -195,6 +225,7 @@ def main(storage_name, layer, model, iteration, normalize_feat, n_neighbors, fea
 
     print 'classified in', toc
     print '--------------------'
+    print 'parts', parts
     print 'add_noise', add_noise, 'to_oracle', to_oracle
     print 'augment_training', augment_training, 'augmentation_noise', augmentation_noise
     print 'noises, c: %f, d: %f' % (noise_std_c, noise_std_d)
