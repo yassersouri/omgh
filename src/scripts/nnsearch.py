@@ -162,7 +162,19 @@ def main(storage_name, layer, model, iteration, normalize_feat, n_neighbors, par
             t_img = caffe.io.load_image(t_img_addr)
             t_parts_part = t_parts.filter_by_name(part_names_to_filter)
             t_img_part = t_parts_part.get_rect(t_img, add_noise=add_noise, noise_std_c=noise_std_c, noise_std_d=noise_std_d)
-            net.predict([t_img_part], oversample=False)
+            try:
+                net.predict([t_img_part], oversample=False)
+            except Exception, e:
+                print '------', t_id, '----------'
+                print part_names_to_filter
+                print t_img_addr
+                print '------------'
+                print t_img.shape
+                print t_parts
+                print '------------'
+                print t_img_part.shape
+                print t_parts_part
+                raise e
             new_Xtest_part[i, :] = net.blobs[feat_layer].data[0].flatten()
 
         return new_Xtest_part
