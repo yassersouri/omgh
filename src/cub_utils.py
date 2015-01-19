@@ -42,7 +42,7 @@ def gen_bg_points(part_rect, seg, parts):
 
     for x, y in zip(xs, ys):
         if (xmin <= x <= xmax and ymin <= y <= ymax):
-            if not seg[x-2:x+3, y-2:y+3, 0].sum():  # is this really necessary!?
+            if not seg[x-2:x+3, y-2:y+3, 0].sum() and False:  # is this really necessary!?
                 parts.append(Part(-1, '?', -1, int(round(y)), int(round(x)), 1))
         else:
             parts.append(Part(-1, '?', -1, int((round(y))), int(round(x)), 1))
