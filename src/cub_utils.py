@@ -31,7 +31,6 @@ def gen_part_points(part_rect, seg, parts):
     for x, y in zip(xs, ys):
         if seg[x, y, 0]:
             parts.append(Part(-1, '?', -1, int(round(y)), int(round(x)), 1))
-    print len(parts)
     return parts
 
 
@@ -51,8 +50,6 @@ def gen_bg_points(part_rect, seg, parts):
                 parts.append(Part(-1, '?', -1, int(round(y)), int(round(x)), 1))
         else:
             parts.append(Part(-1, '?', -1, int((round(y))), int(round(x)), 1))
-
-    print len(parts)
     return parts
 
 
