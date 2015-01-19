@@ -162,23 +162,27 @@ class Parts(object):
         for part in self.parts:
             part.x = part.x - bx
             part.y = part.y - by
+        return self
 
     def denorm_for_bbox(self, bx, by):
         for part in self.parts:
             part.x = part.x + bx
             part.y = part.y + by
+        return self
 
     def norm_for_size(self, bw, bh, size=256):
         size = float(size)
         for part in self.parts:
             part.x = int(round(part.x * size / bw))
             part.y = int(round(part.y * size / bh))
+        return self
 
     def denorm_for_size(self, bw, bh, size=256):
         size = float(size)
         for part in self.parts:
             part.x = int(round(part.x * bw / size))
             part.y = int(round(part.y * bh / size))
+        return self
 
     def transfer(self, s_bbox, d_bbox, size=256):
         new_parts = copy.deepcopy(self)
