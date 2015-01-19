@@ -26,6 +26,7 @@ class Dataset(object):
 class CUB_200_2011(Dataset):
     NAME = 'CUB_200_2011'
     IMAGES_FOLDER_NAME = 'images'
+    SEGMENTAIONS_FOLDER_NAME = 'segmentations'
     IMAGES_FOLDER_NAME_CROPPED = 'images_cropped'
     IMAGES_FILE_NAME = 'images.txt'
     TRAIN_TEST_SPLIT_FILE_NAME = 'train_test_split.txt'
@@ -43,6 +44,8 @@ class CUB_200_2011(Dataset):
             self.base_path, self.IMAGES_FOLDER_NAME)
         self.images_folder_cropped = os.path.join(
             self.base_path, self.IMAGES_FOLDER_NAME_CROPPED)
+        self.segmentation_mask_folder = os.path.join(
+            self.base_path, '..', '..', self.SEGMENTAIONS_FOLDER_NAME)
         self.images_file = os.path.join(
             self.base_path, self.IMAGES_FILE_NAME)
         self.train_test_split_file = os.path.join(
@@ -68,7 +71,30 @@ class CUB_200_2011(Dataset):
                 if cropped:
                     folder = self.images_folder_cropped
                 yield {'img_id': parts[0],
-                       'img_file': os.path.join(folder, parts[1])}
+                       'img_file': os.path.join(folder, parts[1]),
+                       'img_file_rel': parts[1]}
+
+    def get_all_segmentations(self):
+        for img_info in self.get_all_images():
+            yield {'seg_file': os.path.join(self.segmentation_mask_folder, img_info['img_file_rel'][:-3] + 'png'),
+                   'img_id': img_info['img_id']}
+
+    def get_segmentation_info(self, img_id):
+        """
+        don't call this function alot!
+        """
+        all_of_them = [i for i in ifilter(lambda i: int(i['img_id']) == int(img_id), self.get_all_segmentations())]
+
+        return all_of_them[0]['seg_file']
+
+    def get_all_segmentation_infos(self):
+        all_infos = list(self.get_all_segmentations())
+        the_hash = {}
+
+        for info in all_infos:
+            the_hash[int(info['img_id'])] = info['seg_file']
+
+        return the_hash
 
     def get_image_info(self, img_id):
         """
@@ -78,12 +104,16 @@ class CUB_200_2011(Dataset):
 
         return all_of_them[0]['img_file']
 
-    def get_all_image_infos(self):
+    def get_all_image_infos(self, relative=False):
         all_infos = list(self.get_all_images())
         the_hash = {}
 
+        info_key = 'img_file'
+        if relative:
+            info_key = 'img_file_rel'
+
         for info in all_infos:
-            the_hash[int(info['img_id'])] = info['img_file']
+            the_hash[int(info['img_id'])] = info[info_key]
 
         return the_hash
 

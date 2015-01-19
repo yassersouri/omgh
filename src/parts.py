@@ -89,9 +89,12 @@ class Parts(object):
 
         return max_x - min_x, max_y - min_y
 
-    def draw_part(self, ax):
+    def draw_part(self, ax, color=None):
         for part in self:
-            ax.plot(part.x, part.y, 'o')
+            if color is None:
+                ax.plot(part.x, part.y, 'o')
+            else:
+                ax.plot(part.x, part.y, 'o', color=color)
 
     def get_rect_info(self, img, alpha=0.6666, add_noise=False, noise_std_c=5.0, noise_std_d=10.0):
         c_x, c_y = self.center()
