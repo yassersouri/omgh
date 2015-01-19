@@ -1,5 +1,10 @@
 import numpy as np
+import cv2
 from parts import *
+import sys
+import settings
+sys.path.append(settings.CAFFE_PYTHON_PATH)
+import caffe
 
 
 def thresh_segment(seg, thresh):
@@ -49,3 +54,45 @@ def gen_bg_points(part_rect, seg, parts):
 
     print len(parts)
     return parts
+
+
+class DeepHelper(object):
+
+    @classmethod
+    def get_bvlc_net(test_phase=True, gpu_mode=True):
+        net = caffe.Classifier(settings.DEFAULT_MODEL_FILE, settings.DEFAULT_PRETRAINED_FILE, mean=np.load(settings.ILSVRC_MEAN), channel_swap=(2, 1, 0), raw_scale=255)
+        if test_phase:
+            net.set_phase_test()
+        if gpu_mode:
+            net.set_mode_gpu()
+
+        return net
+
+    layers = ['conv1', 'conv2', 'conv3', 'conv4', 'conv5']
+    feats = {}
+    num_feats = {}
+    crop_dim = 0
+    input_dim = 227
+
+    def __init__(self, net=None):
+        if net is None:
+            self.net = self.get_bvlc_net()
+        else:
+            self.net = net
+
+    def init_with_image(self, img):
+        self.net.predict([img], oversample=False)
+        self._make_features_ready()
+
+    def _make_features_ready(self):
+        for layer in self.layers:
+            data = self.net.blobs[layer].data[self.crop_dim]
+
+            data = data.swapaxes(0, 2)
+            data = data.swapaxes(0, 1)
+            data = cv2.resize(data, (self.input_dim, self.input_dim), interpolation=cv2.INTER_LINEAR)
+
+            _, _, num_feat = data.shape
+
+            self.num_feats[layer] = num_feat
+            self.feats[layer] = data
