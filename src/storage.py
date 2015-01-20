@@ -56,7 +56,7 @@ class datastore(object):
         return instance
 
     def save_large_instance(self, instance_path, instance, split_size):
-        instance_arrays = np.vsplit(instance, split_size)
+        instance_arrays = np.array_split(instance, split_size, axis=0)
 
         for i, inst in enumerate(instance_arrays):
             self.save_instance(self.LARGE_FILE_FORMAT % (instance_path, i), inst)
