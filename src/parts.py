@@ -141,7 +141,7 @@ class Parts(object):
         if rect_info is None:
             xmin, xmax, ymin, ymax = self.get_rect_info(img, alpha, add_noise, noise_std_c, noise_std_d)
         else:
-            xmin, ymax, ymin, ymax = rect_info
+            xmin, xmax, ymin, ymax = rect_info
 
         return img[xmin:xmax, ymin:ymax]
 
