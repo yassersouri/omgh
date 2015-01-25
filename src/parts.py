@@ -127,15 +127,21 @@ class Parts(object):
 
         return xmin, xmax, ymin, ymax
 
-    def draw_rect(self, img, alpha=0.6666, color=100, width=2):
-        xmin, xmax, ymin, ymax = self.get_rect_info(img, alpha)
+    def draw_rect(self, img, alpha=0.6666, color=100, width=2, rect_info=None):
+        if rect_info is None:
+            xmin, xmax, ymin, ymax = self.get_rect_info(img, alpha)
+        else:
+            xmin, xmax, ymin, ymax = rect_info
         new_img = img.copy()
         # because opencv doesn't use the sane convention
         cv2.rectangle(new_img, (ymin, xmin), (ymax, xmax), color, width)
         return new_img
 
-    def get_rect(self, img, alpha=0.6666, add_noise=False, noise_std_c=5.0, noise_std_d=10.0):
-        xmin, xmax, ymin, ymax = self.get_rect_info(img, alpha, add_noise, noise_std_c, noise_std_d)
+    def get_rect(self, img, alpha=0.6666, add_noise=False, noise_std_c=5.0, noise_std_d=10.0, rect_info=None):
+        if rect_info is None:
+            xmin, xmax, ymin, ymax = self.get_rect_info(img, alpha, add_noise, noise_std_c, noise_std_d)
+        else:
+            xmin, ymax, ymin, ymax = rect_info
 
         return img[xmin:xmax, ymin:ymax]
 
