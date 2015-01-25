@@ -28,6 +28,7 @@ def main():
     C = 0.0001
     force = False
     load_rf_test = False
+    recalculate_training = True
 
     dh = cub_utils.DeepHelper()
     cub = CUB_200_2011(settings.CUB_ROOT)
@@ -36,38 +37,41 @@ def main():
     all_image_infos = cub.get_all_image_infos()
     all_segmentaion_infos = cub.get_all_segmentation_infos()
 
-    rf_safe = datastore('rf')
+    rf_safe = datastore(settings.storage('rf'))
     rf_safe.super_name = 'features'
-    rf_safe.sub_name = 'head'
+    rf_safe.sub_name = 'head-points'
+    rf_safe.other_sub_name = 'head-final-features'
 
-    Xtrain_ip = rf_safe.get_instance_path(rf_safe.super_name, rf_safe.sub_name, 'Xtrain')
-    Xtest_ip = rf_safe.get_instance_path(rf_safe.super_name, rf_safe.sub_name, 'Xtest')
-    ytrain_ip = rf_safe.get_instance_path(rf_safe.super_name, rf_safe.sub_name, 'ytrain.mat')
-    ytest_ip = rf_safe.get_instance_path(rf_safe.super_name, rf_safe.sub_name, 'ytest.mat')
+    Xtrain_rf_ip = rf_safe.get_instance_path(rf_safe.super_name, rf_safe.sub_name, 'Xtrain_rf')
+    Xtest_rf_ip = rf_safe.get_instance_path(rf_safe.super_name, rf_safe.sub_name, 'Xtest_rf')
+    ytrain_rf_ip = rf_safe.get_instance_path(rf_safe.super_name, rf_safe.sub_name, 'ytrain_rf.mat')
+    ytest_rf_ip = rf_safe.get_instance_path(rf_safe.super_name, rf_safe.sub_name, 'ytest_rf.mat')
+    Xtrain_ip = rf_safe.get_instance_path(rf_safe.super_name, rf_safe.other_sub_name, 'Xtrain')
+    Xtest_ip = rf_safe.get_instance_path(rf_safe.super_name, rf_safe.other_sub_name, 'Xtest')
 
     tic = time()
-    if rf_safe.check_exists(ytrain_ip) and not force:
+    if rf_safe.check_exists(ytrain_rf_ip) and not force:
         print 'loading'
-        Xtrain_rf = rf_safe.load_large_instance(Xtrain_ip, instance_split)
-        ytrain_rf = rf_safe.load_instance(ytrain_ip)
+        Xtrain_rf = rf_safe.load_large_instance(Xtrain_rf_ip, instance_split)
+        ytrain_rf = rf_safe.load_instance(ytrain_rf_ip)
         ytrain_rf = ytrain_rf[0, :]
     else:
         print 'calculating'
         Xtrain_rf, ytrain_rf = dh.part_features_for_rf(all_image_infos, all_segmentaion_infos, cub_parts, IDtrain, Parts.HEAD_PART_NAMES)
 
-        rf_safe.save_large_instance(Xtrain_ip, Xtrain_rf, instance_split)
-        rf_safe.save_instance(ytrain_ip, ytrain_rf)
+        rf_safe.save_large_instance(Xtrain_rf_ip, Xtrain_rf, instance_split)
+        rf_safe.save_instance(ytrain_rf_ip, ytrain_rf)
 
     if load_rf_test:
-        if rf_safe.check_exists(ytest_ip) and not force:
-            Xtest_rf = rf_safe.load_large_instance(Xtest_ip, instance_split)
-            ytest_rf = rf_safe.load_instance(ytest_ip)
+        if rf_safe.check_exists(ytest_rf_ip) and not force:
+            Xtest_rf = rf_safe.load_large_instance(Xtest_rf_ip, instance_split)
+            ytest_rf = rf_safe.load_instance(ytest_rf_ip)
             ytest_rf = ytest_rf[0, :]
         else:
             Xtest_rf, ytest_rf = dh.part_features_for_rf(all_image_infos, all_segmentaion_infos, cub_parts, IDtest, Parts.HEAD_PART_NAMES)
 
-            rf_safe.save_large_instance(Xtest_ip, Xtest_rf, instance_split)
-            rf_safe.save_instance(ytest_ip, ytest_rf)
+            rf_safe.save_large_instance(Xtest_rf_ip, Xtest_rf, instance_split)
+            rf_safe.save_instance(ytest_rf_ip, ytest_rf)
     toc = time()
     print 'loaded or calculated in', toc - tic
 
@@ -144,9 +148,27 @@ def main():
         return new_Xtest_part
 
     tic = time()
-    Xtest_p_h = compute_estimated_part_data('ccpheadft-100000', Xtest_p_h.shape, IDtest, model_rf)
+    if rf_safe.check_exists_large(Xtest_ip) and not force:
+        print 'loading test'
+        Xtest_p_h = rf_safe.load_large_instance(Xtest_ip, instance_split)
+    else:
+        print 'calculating test'
+        Xtest_p_h = compute_estimated_part_data('ccpheadft-100000', Xtest_p_h.shape, IDtest, model_rf)
+
+        rf_safe.save_large_instance(Xtest_ip, Xtest_p_h, instance_split)
+
+    if recalculate_training:
+        if rf_safe.check_exists_large(Xtrain_ip) and not force:
+            print 'loading train'
+            Xtrain_p_h = rf_safe.load_large_instance(Xtrain_ip, instance_split)
+        else:
+            print 'calculating train'
+            Xtrain_p_h = compute_estimated_part_data('ccpheadft-100000', Xtrain_p_h.shape, IDtrain, model_rf)
+
+            rf_safe.save_large_instance(Xtrain_ip, Xtrain_p_h, instance_split)
+
     toc = time()
-    print 'features calculated in', toc - tic
+    print 'features loaded or calculated in', toc - tic
 
     Xtrain = np.concatenate((Xtrain_r, Xtrain_c, Xtrain_p_h), axis=1)
     Xtest = np.concatenate((Xtest_r, Xtest_c, Xtest_p_h), axis=1)
@@ -162,7 +184,7 @@ def main():
     predictions = model.predict(Xtest)
     toc = time() - tic
 
-    print 'classified in', toc
+    print 'classification in', toc
     print '--------------------'
     print 'C:', C
     print '--------------------'

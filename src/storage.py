@@ -40,6 +40,9 @@ class datastore(object):
         else:
             return False
 
+    def check_exists_large(self, instance_path):
+        return self.check_exists(self.LARGE_FILE_FORMAT % (instance_path, 0))
+
     def save_instance(self, instance_path, instance):
         scipy.io.savemat(
             instance_path, {self.global_key: instance}, do_compression=True)
