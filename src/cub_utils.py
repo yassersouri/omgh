@@ -19,8 +19,7 @@ def thresh_segment_mean(seg):
     return thresh_segment(seg, np.mean(seg))
 
 
-def gen_part_points(part_rect, seg, parts):
-    N = 10
+def gen_part_points(part_rect, seg, parts, N=10):
     xmin, xmax, ymin, ymax = part_rect
 
     xs = np.random.uniform(low=xmin+1, high=xmax-1, size=N)
@@ -34,8 +33,7 @@ def gen_part_points(part_rect, seg, parts):
     return parts
 
 
-def gen_bg_points(part_rect, seg, parts):
-    N = 100
+def gen_bg_points(part_rect, seg, parts, N=100):
     h, w = seg.shape[0], seg.shape[1]
     xmin, xmax, ymin, ymax = part_rect
 
@@ -108,7 +106,7 @@ class DeepHelper(object):
 
         return features
 
-    def part_for_image(self, all_image_infos, all_segmentaion_infos, cub_parts, img_id, part_filter_names):
+    def part_for_image(self, all_image_infos, all_segmentaion_infos, cub_parts, img_id, part_filter_names, N_part=10, N_bg=100):
         img = caffe.io.load_image(all_image_infos[img_id])
         seg = thresh_segment_mean(caffe.io.load_image(all_segmentaion_infos[img_id]))
 
@@ -116,8 +114,8 @@ class DeepHelper(object):
 
         parts = cub_parts.for_image(img_id)
         part_parts = parts.filter_by_name(part_filter_names)
-        part_positive = gen_part_points(part_parts.get_rect_info(img), seg, part_parts)
-        part_negative = gen_bg_points(part_parts.get_rect_info(img), seg, part_parts)
+        part_positive = gen_part_points(part_parts.get_rect_info(img), seg, part_parts, N_part)
+        part_negative = gen_bg_points(part_parts.get_rect_info(img), seg, part_parts, N_bg)
 
         part_positive.norm_for_size(img.shape[1], img.shape[0], self.input_dim)
         part_negative.norm_for_size(img.shape[1], img.shape[0], self.input_dim)
@@ -127,11 +125,11 @@ class DeepHelper(object):
 
         return feats_positive, feats_negative
 
-    def part_features_for_rf(self, all_image_infos, all_segmentaion_infos, cub_parts, IDs, part_filter_names):
+    def part_features_for_rf(self, all_image_infos, all_segmentaion_infos, cub_parts, IDs, part_filter_names, N_part=10, N_bg=100):
         positives = []
         negatives = []
         for i, img_id in enumerate(IDs):
-            feats_positive, feats_negative = self.part_for_image(all_image_infos, all_segmentaion_infos, cub_parts, img_id, part_filter_names)
+            feats_positive, feats_negative = self.part_for_image(all_image_infos, all_segmentaion_infos, cub_parts, img_id, part_filter_names, N_part, N_bg)
 
             positives.append(feats_positive)
             negatives.append(feats_negative)
