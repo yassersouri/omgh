@@ -4,6 +4,14 @@ import copy
 from itertools import ifilter
 
 
+def gen_dense_points(xdim=227, ydim=227):
+    dense_points = Parts()
+    for i in range(xdim):
+        for j in range(ydim):
+            dense_points.append(Part(-1, '?', -1, i, j, 1))
+    return dense_points
+
+
 class Part(object):
 
     def __init__(self, img_id, part_name, part_id, x, y, is_visible):
