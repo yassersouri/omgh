@@ -102,15 +102,14 @@ def main():
         net = caffe.Classifier(settings.model(model_name), settings.pretrained(model_name), mean=np.load(settings.ILSVRC_MEAN), channel_swap=(2, 1, 0), raw_scale=255)
         net.set_phase_test()
         net.set_mode_gpu()
-        dh_rf = cub_utils.DeepHelper(net=net)
         # compute estimated head data
         new_Xtest_part = np.zeros(shape)
 
         for i, t_id in enumerate(IDS):
-            print i,
+            print i
             img = caffe.io.load_image(all_image_infos[t_id])
-            dh_rf.init_with_image(img)
-            X = dh_rf.features(dense_points)
+            dh.init_with_image(img)
+            X = dh.features(dense_points)
             preds_prob = model_rf.predict_proba(X)
             max_prob = np.max(preds_prob[:, 1])
             preds_prob = preds_prob[:, 1].reshape((227, 227)).T
