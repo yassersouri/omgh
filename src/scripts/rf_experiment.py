@@ -26,7 +26,7 @@ def main():
     instance_split = 10
     feat_layer = 'fc7'
     C = 0.0001
-    force = False
+    force = True
     load_rf_test = False
     recalculate_training = True
 
@@ -153,7 +153,7 @@ def main():
         Xtest_p_h = rf_safe.load_large_instance(Xtest_ip, instance_split)
     else:
         print 'calculating test'
-        Xtest_p_h = compute_estimated_part_data('ccpheadft-100000', Xtest_p_h.shape, IDtest, model_rf)
+        Xtest_p_h = compute_estimated_part_data('ccpheadrfft-100000', Xtest_p_h.shape, IDtest, model_rf)
 
         rf_safe.save_large_instance(Xtest_ip, Xtest_p_h, instance_split)
 
@@ -163,7 +163,7 @@ def main():
             Xtrain_p_h = rf_safe.load_large_instance(Xtrain_ip, instance_split)
         else:
             print 'calculating train'
-            Xtrain_p_h = compute_estimated_part_data('ccpheadft-100000', Xtrain_p_h.shape, IDtrain, model_rf)
+            Xtrain_p_h = compute_estimated_part_data('ccpheadrfft-100000', Xtrain_p_h.shape, IDtrain, model_rf)
 
             rf_safe.save_large_instance(Xtrain_ip, Xtrain_p_h, instance_split)
 
