@@ -14,6 +14,8 @@ STORAGE_BASE = '/home/ipl/datastores/'
 PREDICTIONS_BASE = '%spredictions/' % STORAGE_BASE
 FULL_LENGTH = 10
 
+BERKELEY_ANNOTATION_BASE_PATH = '/home/ipl/repo/part-based-RCNN/annotations'
+
 STORAGE_NAMES = {
     'ccr': 'cub-caffe-features',
     'ccf': 'cub-caffe-features-flipped',

@@ -1,7 +1,9 @@
 import numpy as np
+import scipy.io
 import cv2
 from parts import *
 import sys
+import os
 import settings
 sys.path.append(settings.CAFFE_PYTHON_PATH)
 import caffe
@@ -142,3 +144,58 @@ class DeepHelper(object):
         y = np.concatenate((y_pos, y_neg))
 
         return X, y
+
+
+class BerkeleyAnnotationsHelper(object):
+    train_file_name = 'bird_train.mat'
+    test_file_name = 'bird_test.mat'
+
+    def __init__(self, base_path, IDtrain, IDtest):
+        self.base_path = base_path
+        self.IDtrain = IDtrain
+        self.IDtest = IDtest
+
+        self.train_path = os.path.join(self.base_path, self.train_file_name)
+        self.test_path = os.path.join(self.base_path, self.test_file_name)
+
+        b_train_anno = scipy.io.loadmat(self.train_path)
+        self.b_train_anno = b_train_anno['data']
+
+        b_test_anno = scipy.io.loadmat(self.test_path)
+        self.b_test_anno = b_test_anno['data']
+
+    def get_train_berkeley_annotation(self, train_id, name):
+        p = 0
+        if name == 'head':
+            p = 1
+        elif name == 'body':
+            p = 2
+        elif name == 'bbox':
+            p = 3
+        res = self.b_train_anno[0, train_id][p][0]
+        ymin, xmin, ymax, xmax = res[0], res[1], res[2], res[3]
+
+        return xmin, xmax, ymin, ymax
+
+    def get_test_berkeley_annotation(self, test_id, name):
+        p = 0
+        if name == 'bbox':
+            p = 1
+        elif name == 'head':
+            p = 2
+        elif name == 'body':
+            p = 3
+        res = self.b_test_anno[0, test_id][p][0]
+        ymin, xmin, ymax, xmax = res[0], res[1], res[2], res[3]
+
+        return xmin, xmax, ymin, ymax
+
+    def get_berkeley_annotation(self, img_id, name):
+        train_where = np.argwhere(self.IDtrain == img_id)
+        test_where = np.argwhere(self.IDtest == img_id)
+        if train_where.shape[0] == 1:
+            return self.get_train_berkeley_annotation(train_where[0, 0], name)
+        elif test_where.shape[0] == 1:
+            return self.get_test_berkeley_annotation(test_where[0, 0], name)
+        else:
+            raise Exception('Not found!')
