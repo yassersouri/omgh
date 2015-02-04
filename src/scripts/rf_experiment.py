@@ -7,7 +7,7 @@ sys.path.append(settings.CAFFE_PYTHON_PATH)
 import caffe
 from storage import datastore
 from dataset import CUB_200_2011
-from deep_extractor import CNN_Features_CAFFE_REFERENCE
+from deep_extractor import CNN_Features_CAFFE_REFERENCE, Berkeley_Extractor
 from parts import Parts, gen_dense_points, Part
 import cub_utils
 import click
@@ -22,13 +22,15 @@ from time import time
 
 
 @click.command()
-def main():
+@click.option('c', '--svm-c', type=click.FLOAT, default=0.0001)
+@click.option('f', '--force', type=click.BOOL, default=False)
+def main(c, f):
     instance_split = 10
     feat_layer = 'fc7'
-    C = 0.0001
-    force = True
     load_rf_test = False
     recalculate_training = True
+    C = c
+    force = f
 
     dh = cub_utils.DeepHelper()
     cub = CUB_200_2011(settings.CUB_ROOT)
@@ -89,8 +91,8 @@ def main():
     features_storage_r = datastore(settings.storage('ccrft'))
     feature_extractor_r = CNN_Features_CAFFE_REFERENCE(features_storage_r, make_net=False)
 
-    features_storage_c = datastore(settings.storage('cccft'))
-    feature_extractor_c = CNN_Features_CAFFE_REFERENCE(features_storage_c, make_net=False)
+    features_storage_c = datastore(settings.storage('bmbc'))
+    feature_extractor_c = Berkeley_Extractor(features_storage_c, make_net=False)
 
     features_storage_p_h = datastore(settings.storage('ccpheadft-100000'))
     feature_extractor_p_h = CNN_Features_CAFFE_REFERENCE(features_storage_p_h, make_net=False)
