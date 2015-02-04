@@ -35,7 +35,7 @@ def main():
         else:
             head_image = utils.get_rect(o_image, head_info)
             head_out_path = os.path.join(b_head_folder, rel_image_path)
-            utils.ensure_dir(head_out_path)
+            utils.ensure_dir(os.path.dirname(head_out_path))
             cv2.imwrite(head_out_path, head_image)
 
         if -1 in body_info:
@@ -43,7 +43,7 @@ def main():
         else:
             body_image = utils.get_rect(o_image, body_info)
             body_out_path = os.path.join(b_body_folder, rel_image_path)
-            utils.ensure_dir(body_out_path)
+            utils.ensure_dir(os.path.dirname(body_out_path))
             cv2.imwrite(body_out_path, body_image)
 
         if -1 in crop_info:
