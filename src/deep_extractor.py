@@ -77,8 +77,7 @@ class CNN_Features_CAFFE_REFERENCE(BaseExtractor):
                 if self.full:
                     pass
                 else:
-                    if len(des.shape) > 1:
-                        des = des[0, :]
+                    des = des.flatten()
 
             yield t, des
 
@@ -95,11 +94,55 @@ class CNN_Features_CAFFE_REFERENCE(BaseExtractor):
             if self.full:
                 pass
             else:
-                if len(des.shape) > 1:
-                    des = des[0, :]
+                des = des.flatten()
             return des
 
     def dummy_extract_one(self, img_id, xDim=None):
         if xDim is None:
             xDim = self.xDim
         return np.zeros(xDim)
+
+
+class Berkeley_Extractor(CNN_Features_CAFFE_REFERENCE):
+
+    def __init__(self, storage, model_file=settings.BERKELEY_MODEL_FILE, pretrained_file=settings.BERKELEY_CROP_PRET, image_mean=settings.ILSVRC_MEAN, make_net=True, xDim=4096):
+        super(CNN_Features_CAFFE_REFERENCE, self).__init__(storage)
+        self.STORAGE_SUB_NAME = 'cnn_feature_berkeley'
+        self.feature_layer = 'fc7'
+        self.feature_crop_index = 0
+        self.xDim = xDim
+
+        self.sub_folder = self.storage.get_sub_folder(
+            self.STORAGE_SUPER_NAME, self.STORAGE_SUB_NAME)
+        self.storage.ensure_dir(self.sub_folder)
+
+        self.model_file = model_file
+        self.pretrained_file = pretrained_file
+        self.image_mean = image_mean
+        self.full = False
+
+        if make_net:
+            self.net = caffe.Classifier(self.model_file,
+                                        self.pretrained_file,
+                                        mean=np.load(self.image_mean),
+                                        channel_swap=(2, 1, 0),
+                                        raw_scale=255, gpu=True)
+
+    def extract_all(self, data_generator, force=False):
+        for t in data_generator:
+            instance_name = "%s.%s" % (t['img_id'], self.FILE_NAMES_EXT)
+            instance_path = self.storage.get_instance_path(
+                self.STORAGE_SUPER_NAME, self.STORAGE_SUB_NAME, instance_name)
+            if force or not self.storage.check_exists(instance_path):
+                try:
+                    im = caffe.io.load_image(t['img_file'])
+                    des = self.net.predict([im], oversample=False).flatten()
+                except IOError:
+                    # here for the missing images we put zero in their place.
+                    # it is not obvious that this is the best thing to do.
+                    des = self.dummy_extract_one(t['img_id'])
+                self.storage.save_instance(instance_path, des)
+            else:
+                des = self.storage.load_instance(instance_path).flatten()
+
+            yield t, des

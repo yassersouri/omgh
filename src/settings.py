@@ -14,7 +14,13 @@ STORAGE_BASE = '/home/ipl/datastores/'
 PREDICTIONS_BASE = '%spredictions/' % STORAGE_BASE
 FULL_LENGTH = 10
 
-BERKELEY_ANNOTATION_BASE_PATH = '/home/ipl/repo/part-based-RCNN/annotations'
+BERKELEY_BASE_PATH = '/home/ipl/repo/part-based-RCNN'
+BERKELEY_ANNOTATION_BASE_PATH = os.path.join(BERKELEY_BASE_PATH, 'annotations')
+BERKELEY_CACHE_FOLDER = os.path.join(BERKELEY_BASE_PATH, 'caches')
+BERKELEY_MODEL_FILE = os.path.join(BERKELEY_CACHE_FOLDER, 'cub_finetune_deploy_fc7.prototxt')
+BERKELEY_CROP_PRET = os.path.join(BERKELEY_CACHE_FOLDER, 'CUB_bbox_finetune.caffe_model')
+BERKELEY_HEAD_PRET = os.path.join(BERKELEY_CACHE_FOLDER, 'CUB_body_finetune.caffe_model')
+BERKELEY_BODY_PRET = os.path.join(BERKELEY_CACHE_FOLDER, 'CUB_head_finetune.caffe_model')
 
 STORAGE_NAMES = {
     'ccr': 'cub-caffe-features',
@@ -31,7 +37,10 @@ STORAGE_NAMES = {
     'ccsc': 'cub-caffe-features-segmented-cropped',
     'cache-cccftt': 'cache-cccftt',
     'nn-parts': 'nn-parts',
-    'rf': 'rf'
+    'rf': 'rf',
+    'bmbc': 'berkeley-model-berkeley-crop',
+    'bmbh': 'berkeley-model-berkeley-head',
+    'bmbb': 'berkeley-model-berkeley-body'
 }
 
 MODEL_NAMES = {
