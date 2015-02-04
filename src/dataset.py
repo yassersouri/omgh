@@ -38,8 +38,13 @@ class CUB_200_2011(Dataset):
     SPLIT_FILE_TRAIN_INDICATOR = '1'
     SPLIT_FILE_TEST_INDICATOR = '0'
 
-    def __init__(self, base_path, full=False):
+    def __init__(self, base_path, images_folder_name=None, full=False):
         super(CUB_200_2011, self).__init__(base_path)
+        if full:
+            self.full_length = settings.FULL_LENGTH
+        if images_folder_name:
+            self.IMAGES_FOLDER_NAME = images_folder_name
+
         self.images_folder = os.path.join(
             self.base_path, self.IMAGES_FOLDER_NAME)
         self.images_folder_cropped = os.path.join(
@@ -59,8 +64,6 @@ class CUB_200_2011(Dataset):
         self.part_locs_file = os.path.join(
             self.base_path, self.PARTS_FOLDER_NAME, self.PART_LOCS_FILE_NAME)
         self.full = full
-        if self.full:
-            self.full_length = settings.FULL_LENGTH
 
     def get_all_images(self, cropped=False):
         with open(self.images_file, 'r') as images_file:
