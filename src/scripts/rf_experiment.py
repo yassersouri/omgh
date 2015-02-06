@@ -88,7 +88,7 @@ def main(c, f):
     # load whole and bbox and head part data
     # load data
     tic = time()
-    features_storage_r = datastore(settings.storage('ccrft'))
+    features_storage_r = datastore(settings.storage('ccrftt-100000'))
     feature_extractor_r = CNN_Features_CAFFE_REFERENCE(features_storage_r, make_net=False)
 
     features_storage_c = datastore(settings.storage('bmbc'))

@@ -2,6 +2,7 @@ import numpy
 import sklearn.metrics
 import os
 import cv2
+import numpy as np
 
 
 def mean_accuracy(groundtruth, predictions):
@@ -28,3 +29,9 @@ def draw_bbox(img, bbox, color=100, width=2):
 def get_rect(img, rect_info):
     xmin, xmax, ymin, ymax = rect_info
     return img[xmin:xmax, ymin:ymax]
+
+
+def l2_feat_norm(feat):
+    row_norms = np.linalg.norm(feat, axis=1)
+    new_feat = feat / row_norms[:, np.newaxis]
+    return new_feat
