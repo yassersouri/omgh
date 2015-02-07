@@ -116,8 +116,8 @@ class DeepHelper(object):
 
         parts = cub_parts.for_image(img_id)
         part_parts = parts.filter_by_name(part_filter_names)
-        part_positive = gen_part_points(part_parts.get_rect_info(img), seg, N_part)
-        part_negative = gen_bg_points(part_parts.get_rect_info(img), seg, N_bg)
+        part_positive = gen_part_points(part_parts.get_rect_info(img.shape), seg, N_part)
+        part_negative = gen_bg_points(part_parts.get_rect_info(img.shape), seg, N_bg)
 
         part_positive.norm_for_size(img.shape[1], img.shape[0], self.input_dim)
         part_negative.norm_for_size(img.shape[1], img.shape[0], self.input_dim)
