@@ -104,12 +104,12 @@ class Parts(object):
             else:
                 ax.plot(part.x, part.y, 'o', color=color)
 
-    def get_rect_info(self, img, alpha=0.6666, add_noise=False, noise_std_c=5.0, noise_std_d=10.0):
+    def get_rect_info(self, img_shape, alpha=0.6666, add_noise=False, noise_std_c=5.0, noise_std_d=10.0):
         c_x, c_y = self.center()
         # if we actually have no choice
         if c_x == 0 and c_y == 0:
-            c_x = img.shape[1]/2.0
-            c_y = img.shape[0]/2.0
+            c_x = img_shape[1]/2.0
+            c_y = img_shape[0]/2.0
         if add_noise:
             # add noise here
             if noise_std_c > 0:
@@ -129,15 +129,15 @@ class Parts(object):
         if h < 10:
             h = 10
         xmin = int(max(0, (c_y - h * alpha)))
-        xmax = int(min(img.shape[0] - 1, (c_y + h * alpha)))
+        xmax = int(min(img_shape[0] - 1, (c_y + h * alpha)))
         ymin = int(max(0, (c_x - w * alpha)))
-        ymax = int(min(img.shape[1] - 1, (c_x + w * alpha)))
+        ymax = int(min(img_shape[1] - 1, (c_x + w * alpha)))
 
         return xmin, xmax, ymin, ymax
 
     def draw_rect(self, img, alpha=0.6666, color=100, width=2, rect_info=None):
         if rect_info is None:
-            xmin, xmax, ymin, ymax = self.get_rect_info(img, alpha)
+            xmin, xmax, ymin, ymax = self.get_rect_info(img.shape, alpha)
         else:
             xmin, xmax, ymin, ymax = rect_info
         new_img = img.copy()
@@ -147,7 +147,7 @@ class Parts(object):
 
     def get_rect(self, img, alpha=0.6666, add_noise=False, noise_std_c=5.0, noise_std_d=10.0, rect_info=None):
         if rect_info is None:
-            xmin, xmax, ymin, ymax = self.get_rect_info(img, alpha, add_noise, noise_std_c, noise_std_d)
+            xmin, xmax, ymin, ymax = self.get_rect_info(img.shape, alpha, add_noise, noise_std_c, noise_std_d)
         else:
             xmin, xmax, ymin, ymax = rect_info
 
