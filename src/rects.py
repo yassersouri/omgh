@@ -1,6 +1,7 @@
 import numpy as np
 import cv2
 import cub_utils
+import parts
 
 
 class Rect(object):
@@ -155,16 +156,16 @@ class Rect(object):
 
 class RectGenerator(object):
     def __init__(self):
-        pass
+        raise NotImplementedError
 
     def setup(self):
-        pass
+        raise NotImplementedError
 
     def generate(img_id):
-        pass
+        raise NotImplementedError
 
     def generate_addr(img_path):
-        pass
+        raise NotImplementedError
 
 
 class BerkeleyRG(RectGenerator):
@@ -182,9 +183,31 @@ class BerkeleyRG(RectGenerator):
         xmin, xmax, ymin, ymax = rect_info_raw
         return Rect(xmin, xmax, ymin, ymax, info='GT - Berkley - imgid: %s' % img_id)
 
+    def generate_addr(self, img_path):
+        raise NotImplementedError("For a ground truth generator this is impossible.")
+
 
 class SharifRG(RectGenerator):
-    pass
+    def __init__(self, cub, part_name, alpha=0.6666):
+        self.cub = cub
+        if part_name == 'body':
+            self.part_filter_name = parts.Parts.BODY_PART_NAMES
+        elif part_name == 'head':
+            self.part_filter_name = parts.Parts.HEAD_PART_NAMES
+        self.alpha = alpha
+
+    def setup(self):
+        self.cub_parts = self.cub.get_parts()
+        self.all_image_infos = self.cub.get_all_image_infos()
+
+    def generate(self, img_id, img_shape=None):
+        if img_shape is None:
+            img = cv2.imread(self.all_image_infos[img_id])
+            img_shape = img.shape
+        parts_for_img = self.cub_parts.for_image(img_id).filter_by_name(self.part_filter_name)
+        rect_info_raw = parts_for_img.get_rect_info(img_shape, alpha=self.alpha)
+        xmin, xmax, ymin, ymax = rect_info_raw
+        return Rect(xmin, xmax, ymin, ymax, info='GT - Sharif - imgid: %s' % img_id)
 
 
 class RandomForestRG(RectGenerator):
