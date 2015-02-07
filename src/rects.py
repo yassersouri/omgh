@@ -65,6 +65,13 @@ class Rect(object):
         self.ymin = int(round(centery - dimy/2))
         self.ymax = int(round(centery + dimy/2))
 
+    def _trim_to_borders(self, img_shape):
+        img_h, img_w = img_shape[:2]
+        self.xmin = max(0, self.xmin)
+        self.xmax = min(img_h - 1, self.xmax)
+        self.ymin = max(0, self.ymin)
+        self.ymax = min(img_w - 1, self.ymax)
+
     def draw_rect(self, img, color=100, width=2):
         """
         Annotate the `img` with this rect.
@@ -78,14 +85,9 @@ class Rect(object):
         """
         Return a sub-image only containing information inside the rect.
         """
-        img_h, img_w = img.shape[:2]
+        self._trim_to_borders(img.shape)
 
-        new_xmin = max(0, self.xmin)
-        new_xmax = min(img_h - 1, self.xmax)
-        new_ymin = max(0, self.ymin)
-        new_ymax = min(img_w - 1, self.ymax)
-
-        return img[new_xmin:new_xmax, new_ymin:new_ymax]
+        return img[self.xmin:self.xmax, self.ymin:self.ymax]
 
     def expand(self, alpha=0.666):
         cendim = self._get_cendim()
@@ -126,10 +128,25 @@ class Rect(object):
         self.ymax += by
 
     def evalIOU(self, gt_rect, source_shape):
+        # making sure not to generate errors futther down the line
+        self._trim_to_borders(source_shape)
+        gt_rect._trim_to_borders(source_shape)
+
         height, width = source_shape[:2]
 
-    def evalPCP(self, gt_rect, thresh=0.5):
-        iou = self.evalIOU(gt_rect)
+        gt_part = np.zeros((height, width), np.uint8)
+        gt_part[gt_rect.xmin:gt_rect.xmax, gt_rect.ymin:gt_rect.ymax] = 1
+
+        sl_part = np.zeros((height, width), np.uint8)
+        sl_part[self.xmin:self.xmax, self.ymin:self.ymax] = 1
+
+        intersection = (gt_part & sl_part).sum()
+        union = (gt_part | sl_part).sum()
+
+        return intersection / float(union)
+
+    def evalPCP(self, gt_rect, source_shape, thresh=0.5):
+        iou = self.evalIOU(gt_rect, source_shape)
         if iou >= thresh:
             return 1
         else:
