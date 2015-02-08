@@ -52,9 +52,9 @@ PRETRAINED_NAMES = {
 }
 
 
-def dyn_aug(sname, folder_name, full_name, iter_len=10):
+def dyn_aug(sname, folder_name, full_name, iter_len=10, iter_step=10000):
     for i in range(iter_len):
-        iteration = (i+1) * 10000
+        iteration = (i+1) * iter_step
         name = '%s-%d' % (sname, iteration)
         STORAGE_NAMES[name] = name
         MODEL_NAMES[name] = MODEL_FILE_TEMP % (CAFFE_ROOT, folder_name)
@@ -68,10 +68,12 @@ dyn_aug('ccrftt', 'finetune_cub', 'finetune_cub', 10)
 dyn_aug('ccpheadft', 'finetune_cub_part_head', 'finetune_cub_part_head', 10)
 dyn_aug('ccpbodyft', 'finetune_cub_part_body', 'finetune_cub_part_body', 10)
 dyn_aug('ccpheadrfft', 'finetune_cub_part_head_rf', 'finetune_cub_part_head_rf', 10)
+dyn_aug('ccrft2st', 'finetune_2step_cub', 'cub_2step_step2', 4, 2500)
+dyn_aug('cccft2st', 'finetune_2step_cub_cropped', 'cub_2step_step2', 4, 2500)
 
 
 def storage(sname):
-    return os.path.join(STORAGE_BASE, STORAGE_NAMES[sname])
+    return os.path.join(STORAGE_BASE, STORAGE_NAMES[sname], )
 
 
 def model(mname):

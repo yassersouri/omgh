@@ -88,11 +88,11 @@ def main(c, f):
     # load whole and bbox and head part data
     # load data
     tic = time()
-    features_storage_r = datastore(settings.storage('ccrftt-100000'))
+    features_storage_r = datastore(settings.storage('ccrft2st-10000'))
     feature_extractor_r = CNN_Features_CAFFE_REFERENCE(features_storage_r, make_net=False)
 
-    features_storage_c = datastore(settings.storage('bmbc'))
-    feature_extractor_c = Berkeley_Extractor(features_storage_c, make_net=False)
+    features_storage_c = datastore(settings.storage('ccrft2st-2500'))
+    feature_extractor_c = CNN_Features_CAFFE_REFERENCE(features_storage_c, make_net=False)
 
     features_storage_p_h = datastore(settings.storage('ccpheadft-100000'))
     feature_extractor_p_h = CNN_Features_CAFFE_REFERENCE(features_storage_p_h, make_net=False)
