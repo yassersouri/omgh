@@ -91,7 +91,7 @@ def main(c, f):
     features_storage_r = datastore(settings.storage('ccrft2st-10000'))
     feature_extractor_r = CNN_Features_CAFFE_REFERENCE(features_storage_r, make_net=False)
 
-    features_storage_c = datastore(settings.storage('ccrft2st-2500'))
+    features_storage_c = datastore(settings.storage('cccft2st-50000'))
     feature_extractor_c = CNN_Features_CAFFE_REFERENCE(features_storage_c, make_net=False)
 
     features_storage_p_h = datastore(settings.storage('ccpheadft-100000'))

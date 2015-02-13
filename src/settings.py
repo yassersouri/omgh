@@ -69,7 +69,7 @@ dyn_aug('ccpheadft', 'finetune_cub_part_head', 'finetune_cub_part_head', 10)
 dyn_aug('ccpbodyft', 'finetune_cub_part_body', 'finetune_cub_part_body', 10)
 dyn_aug('ccpheadrfft', 'finetune_cub_part_head_rf', 'finetune_cub_part_head_rf', 10)
 dyn_aug('ccrft2st', 'finetune_2step_cub', 'cub_2step_step2', 4, 2500)
-dyn_aug('cccft2st', 'finetune_2step_cub_cropped', 'cub_2step_step2', 4, 2500)
+dyn_aug('cccft2st', 'finetune_2step_cub_cropped', 'cub_2step_step2', 2, 25000)
 
 
 def storage(sname):
