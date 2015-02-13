@@ -2,6 +2,7 @@ import numpy as np
 import cv2
 import cub_utils
 import parts
+import utils
 
 
 class Rect(object):
@@ -107,8 +108,8 @@ class Rect(object):
         self.ymin = int(round(self.ymin * size / float(width)))
         self.ymax = int(round(self.ymax * size / float(width)))
 
-    def denorm_for_size(self, source_shape, size=227):
-        height, width = source_shape[:2]
+    def denorm_for_size(self, dest_shape, size=227):
+        height, width = dest_shape[:2]
         self.xmin = int(round(self.xmin * height / float(size)))
         self.xmax = int(round(self.xmax * height / float(size)))
         self.ymin = int(round(self.ymin * width / float(size)))
@@ -169,13 +170,13 @@ class RectGenerator(object):
 
 
 class BerkeleyRG(RectGenerator):
-    def __init__(self, base_path, IDtrain, IDtest, rect_name):
+    def __init__(self, base_path, cub, rect_name):
         self.base_path = base_path
-        self.IDtrain = IDtrain
-        self.IDtest = IDtest
+        self.cub = cub
         self.rect_name = rect_name
 
     def setup(self):
+        self.IDtrain, self.IDtest = self.cub.get_train_test_id()
         self.bah = cub_utils.BerkeleyAnnotationsHelper(self.base_path, self.IDtrain, self.IDtest)
 
     def generate(self, img_id):
@@ -219,4 +220,42 @@ class LocalRandomForestRG(RectGenerator):
 
 
 class NonparametricRG(RectGenerator):
-    pass
+    def __inti__(self, nn_finder, neighbor_gen, cub):
+        self.nn_finder = nn_finder
+        self.neighbor_gen = neighbor_gen
+        self.cub = cub
+
+    def setup(self):
+        self.nn_finder.setup()
+        self.neighbor_gen.setup()
+
+        self.IDtrain, self.IDtest = self.cub.get_train_test_id()
+        self.all_image_infos = self.cub.get_all_image_infos()
+        self.bboxes = self.cub.get_bbox()
+
+    def generate(self, img_id):
+        query_img = cv2.imread(self.all_image_infos[img_id])
+        query_bbox = self.bboxes[img_id - 1]
+        query_subimg = utils.get_rect_from_bbox(query_img, query_bbox)
+        query_img_shape = query_subimg.shape
+
+        # find the neighbor
+        nn_in_train_id = self.nn_finder.find_in_train(img_id)
+
+        # generate the rect and other information from rect generator
+        nn_in_train_rect = self.neighbor_gen.generate(nn_in_train_id)
+        nn_in_train_img = cv2.imread(self.all_image_infos[nn_in_train_id])
+        nn_in_train_bbox = self.bboxes[nn_in_train_id - 1]
+        nn_in_train_subimg = utils.get_rect_from_bbox(nn_in_train_img, nn_in_train_bbox)
+        nn_in_train_shape = nn_in_train_subimg.shape
+
+        # transfer the rect from neighbor to query
+        nn_in_train_rect.norm_for_bbox(nn_in_train_bbox)
+        nn_in_train_rect.norm_for_size(nn_in_train_shape)
+        nn_in_train_rect.denorm_for_size(query_img_shape)
+        nn_in_train_rect.denorm_for_bbox(query_bbox)
+
+        # set some debugging information
+        nn_in_train_rect.info = "Transfered using nonparametricRG from imgid:%d" % nn_in_train_id
+
+        return nn_in_train_rect

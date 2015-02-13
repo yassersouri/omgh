@@ -31,6 +31,12 @@ def get_rect(img, rect_info):
     return img[xmin:xmax, ymin:ymax]
 
 
+def get_rect_from_bbox(img, bbox):
+    by, bx, bw, bh = int(bbox[0]), int(bbox[1]), int(bbox[2]), int(bbox[3])
+
+    return img[bx:bx+bh, by:by+bw]
+
+
 def l2_feat_norm(feat):
     row_norms = np.linalg.norm(feat, axis=1)
     new_feat = feat / row_norms[:, np.newaxis]
