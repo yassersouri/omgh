@@ -356,6 +356,9 @@ class NNFinder(object):
         self.final_storage.instance_path = self.final_storage.get_instance_path(self.final_storage.super_name, self.final_storage.sub_name, '%s.mat' % self.normalize)
         self.Xtrain = self.ssfeature_loader.load_train()
         self.Xtest = self.ssfeature_loader.load_test()
+        if normalize:
+            self.Xtrain = utils.l2_feat_norm(Xtrain)
+            self.Xtest = utils.l2_feat_norm(Xtest)
         self._pre_calculate()
 
     def _pre_calculate(self):
