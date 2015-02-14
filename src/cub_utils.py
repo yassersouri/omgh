@@ -301,11 +301,11 @@ class DeepSSFeatureLoader(SSFeatureLoader):
         self.IDtrain, self.IDtest = self.dataset.get_train_test_id()
         self.dataset_size = sum(1 for _ in self.dataset.get_all_images())
         self.ss_storage.super_name = 'ss_features'
-        self.ss_storage.sub_name = net_name
+        self.ss_storage.sub_name = self.net_name
         self.ss_storage.instance_path = self.ss_storage.get_instance_path(self.ss_storage.super_name, self.ss_storage.sub_name, 'feat_cache_%s' % self.layer_name)
 
         # load the instance if exists
-        if self.ss_storage.check_exists(self.ss_storage.instance_path):
+        if self.ss_storage.check_exists_large(self.ss_storage.instance_path):
             self.instance = self.ss_storage.load_large_instance(self.ss_storage.instance_path, self.instance_split)
 
         # calculate the instance
@@ -329,7 +329,7 @@ class DeepSSFeatureLoader(SSFeatureLoader):
         for i, info in enumerate(self.dataset.get_all_images(cropped=True)):
             img = caffe.io.load_image(info['img_file'])
             self.net.predict([img], oversample=False)
-            instance[i, :] = self.net.blobs[self.layer_name].data[0].flatten()
+            instance[i, :] = self.net.blobs[self.layer_name].data[self.crop_index].flatten()
         return instance
 
 
@@ -373,8 +373,8 @@ class NNFinder(object):
     def find_in_train(self, img_id):
         # what is the test index of this img_id?
         try:
-            test_index = np.argwhere(self.IDtest == img_id)[0][0]
+            test_index = np.argwhere(self.ssfeature_loader.IDtest == img_id)[0][0]
         except IndexError:
             raise IndexError('img_id is not in test set!')
-        nn_id = self.IDtrain[self.NNS[test_index]]
+        nn_id = self.ssfeature_loader.IDtrain[self.NNS[test_index]]
         return nn_id

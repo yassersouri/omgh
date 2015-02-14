@@ -40,7 +40,9 @@ STORAGE_NAMES = {
     'rf': 'rf',
     'bmbc': 'berkeley-model-berkeley-crop',
     'bmbh': 'berkeley-model-berkeley-head',
-    'bmbb': 'berkeley-model-berkeley-body'
+    'bmbb': 'berkeley-model-berkeley-body',
+    'nn-cache': 'nn-cache',
+    'ss-cache': 'ss-cache'
 }
 
 MODEL_NAMES = {

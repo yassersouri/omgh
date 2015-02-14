@@ -3,6 +3,11 @@ import cv2
 import cub_utils
 import parts
 import utils
+import matplotlib.pylab as plt
+import settings
+import sys
+sys.path.append(settings.CAFFE_PYTHON_PATH)
+import caffe
 
 
 class Rect(object):
@@ -220,7 +225,7 @@ class LocalRandomForestRG(RectGenerator):
 
 
 class NonparametricRG(RectGenerator):
-    def __inti__(self, nn_finder, neighbor_gen, dataset):
+    def __init__(self, nn_finder, neighbor_gen, dataset):
         self.nn_finder = nn_finder
         self.neighbor_gen = neighbor_gen
         self.dataset = dataset
@@ -259,3 +264,30 @@ class NonparametricRG(RectGenerator):
         nn_in_train_rect.info = "Transfered using nonparametricRG from imgid: %d" % nn_in_train_id
 
         return nn_in_train_rect
+
+    def vis(self, img_id):
+        fig = plt.figure(figsize=(20, 10))
+        ax1 = fig.add_subplot(121)
+        ax2 = fig.add_subplot(122)
+
+        img_info = self.dataset.get_image_info(img_id)
+        nn_id = self.nn_finder.find_in_train(img_id)
+        nn_info = self.dataset.get_image_info(nn_id)
+
+        nn_rect = self.neighbor_gen.generate(nn_id)
+        oracle_rect = self.neighbor_gen.generate(img_id)
+        est_rect = self.generate(img_id)
+
+        img = caffe.io.load_image(img_info)
+        nn = caffe.io.load_image(nn_info)
+
+        img = oracle_rect.draw_rect(img, color=(1, 1, 1), width=2)
+        img = est_rect.draw_rect(img, color=(1, 0, 0), width=1)
+        nn = nn_rect.draw_rect(nn, color=(1, 1, 1), width=2)
+
+        ax1.imshow(img)
+        ax1.set_title('q: %d' % img_id)
+        ax2.imshow(nn)
+        ax2.set_title('n: %d' % nn_id)
+
+        print est_rect.evalIOU(oracle_rect, img.shape)
