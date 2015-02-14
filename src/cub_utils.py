@@ -6,6 +6,10 @@ import sys
 import os
 import settings
 import sklearn.neighbors
+import skimage.feature
+import skimage.color
+import skimage.transform
+import utils
 sys.path.append(settings.CAFFE_PYTHON_PATH)
 import caffe
 
@@ -257,6 +261,8 @@ class SSFeatureLoader(object):
     This will help NNFinder to find the nearest neighbors in the space
     provided by this feature loader
     """
+    instance_split = 10
+
     def __init__(self, ss_storage):
         raise NotImplementedError
 
@@ -264,7 +270,15 @@ class SSFeatureLoader(object):
         raise NotImplementedError
 
     def load_all(self):
-        raise NotImplementedError
+        return self.instance
+
+    def load_train(self):
+        # FIXME: this will only work for the CUB dataset
+        return self.instance[self.IDtrain - 1, :]
+
+    def load_test(self):
+        # FIXME this will only work for the CUB dataset
+        return self.instance[self.IDtest - 1, :]
 
     def load_one(self, img):
         raise NotImplementedError
@@ -283,7 +297,6 @@ class DeepSSFeatureLoader(SSFeatureLoader):
         'conv4': 64896,
         'conv3': 64896
     }
-    instance_split = 10
 
     def __init__(self, dataset, ss_storage, net=None, net_name=None, layer_name='pool5', crop_index=0):
         self.dataset = dataset
@@ -313,17 +326,6 @@ class DeepSSFeatureLoader(SSFeatureLoader):
             self.instance = self._calculate()
             self.ss_storage.save_large_instance(self.ss_storage.instance_path, self.instance, self.instance_split)
 
-    def load_all(self):
-        return self.instance
-
-    def load_train(self):
-        # FIXME: this will only work for the CUB dataset
-        return self.instance[self.IDtrain - 1, :]
-
-    def load_test(self):
-        # FIXME this will only work for the CUB dataset
-        return self.instance[self.IDtest - 1, :]
-
     def _calculate(self):
         instance = np.zeros((self.dataset_size, self.CAFFENET_LAYER_DIM[self.layer_name]))
         for i, info in enumerate(self.dataset.get_all_images(cropped=True)):
@@ -334,7 +336,38 @@ class DeepSSFeatureLoader(SSFeatureLoader):
 
 
 class HOGSSFeatureLoader(SSFeatureLoader):
-    pass
+    HOG_RESIZE = (227, 227)
+    HOG_DIM = 26244
+
+    def __init__(self, dataset, ss_storage):
+        self.dataset = dataset
+        self.ss_storage = ss_storage
+
+    def setup(self):
+        self.IDtrain, self.IDtest = self.dataset.get_train_test_id()
+        self.dataset_size = sum(1 for _ in self.dataset.get_all_images())
+        self.ss_storage.super_name = 'ss_features'
+        self.ss_storage.sub_name = 'hog'
+        self.ss_storage.instance_path = self.ss_storage.get_instance_path(self.ss_storage.super_name, self.ss_storage.sub_name, 'hog')
+
+        # load the instance if exists
+        if self.ss_storage.check_exists_large(self.ss_storage.instance_path):
+            self.instance = self.ss_storage.load_large_instance(self.ss_storage.instance_path, self.instance_split)
+
+        # calculate the instance
+        else:
+            self.instance = self._calculate()
+            self.ss_storage.save_large_instance(self.ss_storage.instance_path, self.instance, self.instance_split)
+
+    def _calculate(self):
+        instance = np.zeros((self.dataset_size, self.HOG_DIM))
+        for i, info in enumerate(self.dataset.get_all_images(cropped=True)):
+            img = caffe.io.load_image(info['img_file'])
+            img_g = skimage.color.rgb2gray(img)
+            img_r = skimage.transform.resize(img_g, self.HOG_RESIZE)
+
+            instance[i, :] = skimage.feature.hog(img_r, orientations=9, pixels_per_cell=(8, 8), cells_per_block=(2, 2))
+        return instance
 
 
 class GISTFeatureLoader(SSFeatureLoader):
