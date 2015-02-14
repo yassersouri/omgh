@@ -220,18 +220,18 @@ class LocalRandomForestRG(RectGenerator):
 
 
 class NonparametricRG(RectGenerator):
-    def __inti__(self, nn_finder, neighbor_gen, cub):
+    def __inti__(self, nn_finder, neighbor_gen, dataset):
         self.nn_finder = nn_finder
         self.neighbor_gen = neighbor_gen
-        self.cub = cub
+        self.dataset = dataset
 
     def setup(self):
         self.nn_finder.setup()
         self.neighbor_gen.setup()
 
-        self.IDtrain, self.IDtest = self.cub.get_train_test_id()
-        self.all_image_infos = self.cub.get_all_image_infos()
-        self.bboxes = self.cub.get_bbox()
+        self.IDtrain, self.IDtest = self.dataset.get_train_test_id()
+        self.all_image_infos = self.dataset.get_all_image_infos()
+        self.bboxes = self.dataset.get_bbox()
 
     def generate(self, img_id):
         query_img = cv2.imread(self.all_image_infos[img_id])
@@ -256,6 +256,6 @@ class NonparametricRG(RectGenerator):
         nn_in_train_rect.denorm_for_bbox(query_bbox)
 
         # set some debugging information
-        nn_in_train_rect.info = "Transfered using nonparametricRG from imgid:%d" % nn_in_train_id
+        nn_in_train_rect.info = "Transfered using nonparametricRG from imgid: %d" % nn_in_train_id
 
         return nn_in_train_rect

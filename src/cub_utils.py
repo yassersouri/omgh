@@ -5,6 +5,7 @@ from parts import *
 import sys
 import os
 import settings
+import sklearn.neighbors
 sys.path.append(settings.CAFFE_PYTHON_PATH)
 import caffe
 
@@ -55,9 +56,19 @@ def gen_bg_points(part_rect, seg, N=100):
 
 class DeepHelper(object):
 
-    @classmethod
+    @staticmethod
     def get_bvlc_net(test_phase=True, gpu_mode=True):
         net = caffe.Classifier(settings.DEFAULT_MODEL_FILE, settings.DEFAULT_PRETRAINED_FILE, mean=np.load(settings.ILSVRC_MEAN), channel_swap=(2, 1, 0), raw_scale=255)
+        if test_phase:
+            net.set_phase_test()
+        if gpu_mode:
+            net.set_mode_gpu()
+
+        return net
+
+    @staticmethod
+    def get_custom_net(model_def, pretrained_file, test_phase=True, gpu_mode=True):
+        net = caffe.Classifier(model_def, pretrained_file, mean=np.load(settings.ILSVRC_MEAN),  channel_swap=(2, 1, 0), raw_scale=255)
         if test_phase:
             net.set_phase_test()
         if gpu_mode:
@@ -237,3 +248,133 @@ class BerkeleyAnnotationsHelper(object):
             return self.get_test_berkeley_annotation(test_where[0, 0], name)
         else:
             raise Exception('Not found!')
+
+
+class SSFeatureLoader(object):
+    """
+    Search space feature loaders.
+
+    This will help NNFinder to find the nearest neighbors in the space
+    provided by this feature loader
+    """
+    def __init__(self, ss_storage):
+        raise NotImplementedError
+
+    def setup(self):
+        raise NotImplementedError
+
+    def load_all(self):
+        raise NotImplementedError
+
+    def load_one(self, img):
+        raise NotImplementedError
+
+
+class FileSSFeatureLoader(SSFeatureLoader):
+    pass
+
+
+class DeepSSFeatureLoader(SSFeatureLoader):
+    CAFFENET_LAYER_DIM = {
+        'fc7': 4096,
+        'fc6': 4096,
+        'pool5': 9216,
+        'conv5': 43264,
+        'conv4': 64896,
+        'conv3': 64896
+    }
+    instance_split = 10
+
+    def __init__(self, dataset, ss_storage, net=None, net_name=None, layer_name='pool5', crop_index=0):
+        self.dataset = dataset
+        self.ss_storage = ss_storage
+        if net is None:
+            self.net = DeepHelper.get_bvlc_net()
+        else:
+            self.net = net
+
+        self.net_name = net_name
+        self.layer_name = layer_name
+        self.crop_index = crop_index
+
+    def setup(self):
+        self.IDtrain, self.IDtest = self.dataset.get_train_test_id()
+        self.dataset_size = sum(1 for _ in self.dataset.get_all_images())
+        self.ss_storage.super_name = 'ss_features'
+        self.ss_storage.sub_name = net_name
+        self.ss_storage.instance_path = self.ss_storage.get_instance_path(self.ss_storage.super_name, self.ss_storage.sub_name, 'feat_cache_%s' % self.layer_name)
+
+        # load the instance if exists
+        if self.ss_storage.check_exists(self.ss_storage.instance_path):
+            self.instance = self.ss_storage.load_large_instance(self.ss_storage.instance_path, self.instance_split)
+
+        # calculate the instance
+        else:
+            self.instance = self._calculate()
+            self.ss_storage.save_large_instance(self.ss_storage.instance_path, self.instance, self.instance_split)
+
+    def load_all(self):
+        return self.instance
+
+    def load_train(self):
+        # FIXME: this will only work for the CUB dataset
+        return self.instance[self.IDtrain - 1, :]
+
+    def load_test(self):
+        # FIXME this will only work for the CUB dataset
+        return self.instance[self.IDtest - 1, :]
+
+    def _calculate(self):
+        instance = np.zeros((self.dataset_size, self.CAFFENET_LAYER_DIM[self.layer_name]))
+        for i, info in enumerate(self.dataset.get_all_images(cropped=True)):
+            img = caffe.io.load_image(info['img_file'])
+            self.net.predict([img], oversample=False)
+            instance[i, :] = self.net.blobs[self.layer_name].data[0].flatten()
+        return instance
+
+
+class HOGSSFeatureLoader(SSFeatureLoader):
+    pass
+
+
+class GISTFeatureLoader(SSFeatureLoader):
+    pass
+
+
+class NNFinder(object):
+
+    def __init__(self, final_storage, ssfeature_loader, feature_loader_name, normalize=True):
+        self.final_storage = final_storage
+        self.ssfeature_loader = ssfeature_loader
+        self.feature_loader_name = feature_loader_name
+        self.normalize = normalize
+
+    def setup(self):
+        self.ssfeature_loader.setup()
+        self.final_storage.super_name = 'NNS'
+        self.final_storage.sub_name = self.feature_loader_name
+        self.final_storage.instance_path = self.final_storage.get_instance_path(self.final_storage.super_name, self.final_storage.sub_name, '%s.mat' % self.normalize)
+        self.Xtrain = self.ssfeature_loader.load_train()
+        self.Xtest = self.ssfeature_loader.load_test()
+        self._pre_calculate()
+
+    def _pre_calculate(self):
+        if self.final_storage.check_exists(self.final_storage.instance_path):
+            self.NNS = self.final_storage.load_instance(self.final_storage.instance_path)
+        else:
+            nn_model = sklearn.neighbors.NearestNeighbors(n_neighbors=1, algorithm='ball_tree', metric='minkowski', p=2)
+            nn_model.fit(self.Xtrain)
+            self.NNS = nn_model.kneighbors(self.Xtest, 1, return_distance=False)
+            self.final_storage.save_instance(self.final_storage.instance_path, self.NNS)
+
+        # this needs change for larges n_neighbors
+        self.NNS = self.NNS.T[0]
+
+    def find_in_train(self, img_id):
+        # what is the test index of this img_id?
+        try:
+            test_index = np.argwhere(self.IDtest == img_id)[0][0]
+        except IndexError:
+            raise IndexError('img_id is not in test set!')
+        nn_id = self.IDtrain[self.NNS[test_index]]
+        return nn_id
