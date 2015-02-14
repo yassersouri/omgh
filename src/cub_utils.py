@@ -376,28 +376,31 @@ class GISTFeatureLoader(SSFeatureLoader):
 
 class NNFinder(object):
 
-    def __init__(self, final_storage, ssfeature_loader, feature_loader_name, normalize=True):
+    def __init__(self, final_storage, ssfeature_loader, feature_loader_name, dataset, normalize=True):
         self.final_storage = final_storage
         self.ssfeature_loader = ssfeature_loader
         self.feature_loader_name = feature_loader_name
         self.normalize = normalize
+        self.dataset = dataset
 
     def setup(self):
-        self.ssfeature_loader.setup()
         self.final_storage.super_name = 'NNS'
         self.final_storage.sub_name = self.feature_loader_name
         self.final_storage.instance_path = self.final_storage.get_instance_path(self.final_storage.super_name, self.final_storage.sub_name, '%s.mat' % self.normalize)
-        self.Xtrain = self.ssfeature_loader.load_train()
-        self.Xtest = self.ssfeature_loader.load_test()
-        if normalize:
-            self.Xtrain = utils.l2_feat_norm(Xtrain)
-            self.Xtest = utils.l2_feat_norm(Xtest)
         self._pre_calculate()
+        self.IDtrain, self.IDtest = self.dataset.get_train_test_id()
 
     def _pre_calculate(self):
         if self.final_storage.check_exists(self.final_storage.instance_path):
             self.NNS = self.final_storage.load_instance(self.final_storage.instance_path)
         else:
+            self.ssfeature_loader.setup()
+            self.Xtrain = self.ssfeature_loader.load_train()
+            self.Xtest = self.ssfeature_loader.load_test()
+            if self.normalize:
+                self.Xtrain = utils.l2_feat_norm(self.Xtrain)
+                self.Xtest = utils.l2_feat_norm(self.Xtest)
+
             nn_model = sklearn.neighbors.NearestNeighbors(n_neighbors=1, algorithm='ball_tree', metric='minkowski', p=2)
             nn_model.fit(self.Xtrain)
             self.NNS = nn_model.kneighbors(self.Xtest, 1, return_distance=False)
@@ -409,8 +412,8 @@ class NNFinder(object):
     def find_in_train(self, img_id):
         # what is the test index of this img_id?
         try:
-            test_index = np.argwhere(self.ssfeature_loader.IDtest == img_id)[0][0]
+            test_index = np.argwhere(self.IDtest == img_id)[0][0]
         except IndexError:
             raise IndexError('img_id is not in test set!')
-        nn_id = self.ssfeature_loader.IDtrain[self.NNS[test_index]]
+        nn_id = self.IDtrain[self.NNS[test_index]]
         return nn_id
