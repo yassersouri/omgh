@@ -297,6 +297,7 @@ class DeepSSFeatureLoader(SSFeatureLoader):
         'conv4': 64896,
         'conv3': 64896
     }
+    name = 'deeploader'
 
     def __init__(self, dataset, ss_storage, net=None, net_name=None, layer_name='pool5', crop_index=0):
         self.dataset = dataset
@@ -338,6 +339,7 @@ class DeepSSFeatureLoader(SSFeatureLoader):
 class HOGSSFeatureLoader(SSFeatureLoader):
     HOG_RESIZE = (227, 227)
     HOG_DIM = 26244
+    name = 'hogloader'
 
     def __init__(self, dataset, ss_storage):
         self.dataset = dataset
@@ -376,10 +378,10 @@ class GISTFeatureLoader(SSFeatureLoader):
 
 class NNFinder(object):
 
-    def __init__(self, final_storage, ssfeature_loader, feature_loader_name, dataset, normalize=True):
+    def __init__(self, final_storage, ssfeature_loader, dataset, normalize=True):
         self.final_storage = final_storage
         self.ssfeature_loader = ssfeature_loader
-        self.feature_loader_name = feature_loader_name
+        self.feature_loader_name = ssfeature_loader.name
         self.normalize = normalize
         self.dataset = dataset
 
