@@ -161,7 +161,11 @@ class Rect(object):
 
 
 class RectGenerator(object):
+
     def __init__(self):
+        raise NotImplementedError
+
+    def get_name(self):
         raise NotImplementedError
 
     def setup(self):

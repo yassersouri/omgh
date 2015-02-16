@@ -266,6 +266,9 @@ class SSFeatureLoader(object):
     def __init__(self, ss_storage):
         raise NotImplementedError
 
+    def get_name(self):
+        raise NotImplementedError
+
     def setup(self):
         raise NotImplementedError
 
@@ -284,10 +287,6 @@ class SSFeatureLoader(object):
         raise NotImplementedError
 
 
-class FileSSFeatureLoader(SSFeatureLoader):
-    pass
-
-
 class DeepSSFeatureLoader(SSFeatureLoader):
     CAFFENET_LAYER_DIM = {
         'fc7': 4096,
@@ -297,7 +296,6 @@ class DeepSSFeatureLoader(SSFeatureLoader):
         'conv4': 64896,
         'conv3': 64896
     }
-    name = 'deeploader'
 
     def __init__(self, dataset, ss_storage, net=None, net_name=None, layer_name='pool5', crop_index=0):
         self.dataset = dataset
@@ -310,6 +308,9 @@ class DeepSSFeatureLoader(SSFeatureLoader):
         self.net_name = net_name
         self.layer_name = layer_name
         self.crop_index = crop_index
+
+    def get_name(self):
+        return 'deeploader'
 
     def setup(self):
         self.IDtrain, self.IDtest = self.dataset.get_train_test_id()
@@ -339,11 +340,13 @@ class DeepSSFeatureLoader(SSFeatureLoader):
 class HOGSSFeatureLoader(SSFeatureLoader):
     HOG_RESIZE = (227, 227)
     HOG_DIM = 26244
-    name = 'hogloader'
 
     def __init__(self, dataset, ss_storage):
         self.dataset = dataset
         self.ss_storage = ss_storage
+
+    def get_name(self):
+        return 'hogloader'
 
     def setup(self):
         self.IDtrain, self.IDtest = self.dataset.get_train_test_id()
@@ -381,7 +384,7 @@ class NNFinder(object):
     def __init__(self, final_storage, ssfeature_loader, dataset, normalize=True):
         self.final_storage = final_storage
         self.ssfeature_loader = ssfeature_loader
-        self.feature_loader_name = ssfeature_loader.name
+        self.feature_loader_name = ssfeature_loader.get_name()
         self.normalize = normalize
         self.dataset = dataset
 
