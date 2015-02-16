@@ -402,15 +402,15 @@ class RandomForestRG(RectGenerator):
         rect = self.learn_from.generate(img_id)
 
         # generate points
-        part_points = self._get_part_points(rect, seg)
-        bg_points = self._get_bg_points(rect, seg)
+        part_points = self._get_part_points(rect, seg, self.pt_n_part)
+        bg_points = self._get_bg_points(rect, seg, self.pt_n_bg)
 
         # do the forward path
         self.dh.init_with_image(img)
 
         # normalize points for image size
-        part_points.norm_for_size(img.shape[0], img.shape[1], self.resize_dim[0])
-        bg_points.norm_for_size(img.shape[0], img.shape[1], self.resize_dim[0])
+        part_points.norm_for_size(img.shape[1], img.shape[0], self.resize_dim[0])
+        bg_points.norm_for_size(img.shape[1], img.shape[0], self.resize_dim[0])
 
         # gather column feature for points
         feats_positive = self.dh.features(part_points)
@@ -439,7 +439,7 @@ class RandomForestRG(RectGenerator):
         self.ytest = self.final_storage.load_instance(self.ip_ytest)
 
     def _load_or_calculate(self):
-        if self.final_storage.check_exists(self.ytrain):
+        if self.final_storage.check_exists(self.ip_ytrain):
             logging.info('Loading data for RF')
             tic = dt.now()
 
