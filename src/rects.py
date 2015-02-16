@@ -225,9 +225,25 @@ class SharifRG(RectGenerator):
         xmin, xmax, ymin, ymax = rect_info_raw
         return Rect(xmin, xmax, ymin, ymax, info='GT - Sharif - imgid: %s' % img_id)
 
+    def generate_addr(self, img_path):
+        raise NotImplementedError("For a ground truth generator this is impossible.")
+
 
 class RandomForestRG(RectGenerator):
-    pass
+    def __init__(self, final_storage, learn_from):
+        pass
+
+    def setup(self):
+        pass
+
+    def generate(self, img_id):
+        pass
+
+    def generate_addr(self, img_path):
+        pass
+
+    def vis(self, img_info, is_path=False):
+        pass
 
 
 class LocalRandomForestRG(RectGenerator):
@@ -247,6 +263,9 @@ class NonparametricRG(RectGenerator):
         self.IDtrain, self.IDtest = self.dataset.get_train_test_id()
         self.all_image_infos = self.dataset.get_all_image_infos()
         self.bboxes = self.dataset.get_bbox()
+
+    def get_name(self):
+        return 'NonparametricRG(ng:%s - nnf.ss:%s)' % (self.neighbor_gen.get_name(), self.nn_finder.feature_loader_name)
 
     def generate(self, img_id):
         query_img = cv2.imread(self.all_image_infos[img_id])
