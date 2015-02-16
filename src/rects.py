@@ -6,16 +6,19 @@ import utils
 import matplotlib.pylab as plt
 import settings
 import sys
+import sklearn.ensemble
+import logging
+from datetime import datetime as dt
 sys.path.append(settings.CAFFE_PYTHON_PATH)
 import caffe
 
 
 class Rect(object):
     def __init__(self, xmin, xmax, ymin, ymax, info=None):
-        self.xmin = xmin
-        self.ymin = ymin
-        self.xmax = xmax
-        self.ymax = ymax
+        self.xmin = int(xmin)
+        self.ymin = int(ymin)
+        self.xmax = int(xmax)
+        self.ymax = int(ymax)
         self.info = info
 
     def width(self):
@@ -23,6 +26,13 @@ class Rect(object):
 
     def height(self):
         return self.xmax - self.xmin
+
+    def center(self):
+        """
+        return float(cent_x), float(cent_y) tuple
+        """
+
+        return (self.xmin + self.xmax) / 2., (self.ymin + self.ymax) / 2.
 
     def __str__(self):
         return "Rect: \t xmin:%s \t xmax:%s \t ymin:%s \t ymax:%s \t\t info:%s" % (self.xmin, self.xmax, self.ymin, self.ymax, self.info)
@@ -237,11 +247,251 @@ class SharifRG(RectGenerator):
 
 
 class RandomForestRG(RectGenerator):
-    def __init__(self, final_storage, learn_from):
-        pass
+    point_gen_strategies = ['rand', 'unif', 'norm']
+    instance_split = 10
+    resize_dim = (227, 227)
+
+    @staticmethod
+    def _get_rand_points(rect, N):
+        xs = np.random.uniform(low=rect.xmin+1, high=rect.xmax-1, size=N)
+        ys = np.random.uniform(low=rect.ymin+1, high=rect.ymax-1, size=N)
+
+        points = parts.Parts()
+        for x, y in zip(xs, ys):
+            points.append(parts.Part(-1, '?', -1, int(round(y)), int(round(x)), 1))
+        return points
+
+    @staticmethod
+    def _get_unif_points(rect, N, no_side=False):
+        rect_w = rect.width()
+        rect_h = rect.height()
+        if not no_side:
+            x_step = rect_h / (np.sqrt(N) - 1)
+            y_step = rect_w / (np.sqrt(N) - 1)
+        else:
+            x_step = rect_h / (np.sqrt(N) + 1)
+            y_step = rect_w / (np.sqrt(N) + 1)
+
+        x_count = int(rect_h / x_step)
+        y_count = int(rect_w / y_step)
+
+        points = parts.Parts()
+        if not no_side:
+            x_from, y_from = 0, 0
+            x_to, y_to = x_count + 1, y_count + 1
+        else:
+            x_from, y_from = 1, 1
+            x_to, y_to = x_count, y_count
+        for i in range(x_from, x_to):
+            for j in range(y_from, y_to):
+                x = (rect.xmin + int(((i) * x_step)))
+                y = (rect.ymin + int(((j) * y_step)))
+                points.append(parts.Part(-1, '?', -1, y, x, 1))
+        return points
+
+    @staticmethod
+    def _get_norm_points(rect, N, var_x, var_y, clip=True):
+        cent_x, cent_y = rect.center()
+
+        xs = np.random.normal(loc=cent_x, scale=var_x, size=N)
+        ys = np.random.normal(loc=cent_y, scale=var_y, size=N)
+
+        points = parts.Parts()
+        for x, y in zip(xs, ys):
+            if rect.xmin <= x <= rect.xmax and rect.ymin <= y <= rect.ymax or not clip:
+                points.append(parts.Part(-1, '?', -1, int(round(y)), int(round(x)), 1))
+        return points
+
+    def __init__(self, final_storage, learn_from, net, net_name, dataset, num_tree=10, max_depth=10, random_state='ali', use_seg=True, point_gen_strategy='unif', pt_n_part=10, pt_n_bg=100):
+        """
+        point_gen_strategy: {'rand', 'unif', 'norm'}
+        """
+        assert point_gen_strategy in self.point_gen_strategies
+        assert type(max_depth) is int
+        assert type(num_tree) is int
+        assert type(pt_n_part) is int
+        assert type(pt_n_bg) is int
+        assert pt_n_part >= 1
+        assert pt_n_bg >= 1
+        assert max_depth > 2
+        assert num_tree >= 1
+        assert issubclass(type(learn_from), RectGenerator)
+        assert type(random_state) is not None
+
+        self.final_storage = final_storage
+        self.learn_from = learn_from
+        self.net = net
+        self.net_name = net_name
+        self.dataset = dataset
+        self.num_tree = num_tree
+        self.max_depth = max_depth
+        self.random_state = random_state
+        self.point_gen_strategy = point_gen_strategy
+        self.use_seg = use_seg
+        self.pt_n_part = pt_n_part
+        self.pt_n_bg = pt_n_bg
+
+    def _setup_final_storage(self):
+        info_part = '(ptgenst:%s, useg:%s, ptnprt:%d, ptnbg:%d, rands:%s)' % (self.point_gen_strategy, str(self.use_seg), self.pt_n_part, self.pt_n_bg, str(self.random_state))
+        self.final_storage.super_name = self.learn_from.get_name()
+        self.final_storage.sub_name = self.net_name
+        self.ip_Xtrain_points = self.final_storage.get_instance_path(self.final_storage.super_name, self.final_storage.sub_name, 'Xtrain_points%s' % info_part)
+        self.ip_Xtest_points = self.final_storage.get_instance_path(self.final_storage.super_name, self.final_storage.sub_name, 'Xtest_points%s' % info_part)
+        self.ip_ytrain = self.final_storage.get_instance_path(self.final_storage.super_name, self.final_storage.sub_name, 'ytrain.mat%s' % info_part)
+        self.ip_ytest = self.final_storage.get_instance_path(self.final_storage.super_name, self.final_storage.sub_name, 'ytest.mat%s' % info_part)
+
+    def _calc_for_rf(self, ids):
+        positives = []
+        negatives = []
+
+        for img_id in ids:
+            feats_positive, feats_negative = self._calc_for_image(img_id)
+            positives.append(feats_positive)
+            negatives.append(feats_negative)
+        X_pos = np.vstack(positives)
+        y_pos = np.ones((X_pos.shape[0]), np.int)
+        X_neg = np.vstack(negatives)
+        y_neg = np.zeros((X_neg.shape[0]), np.int)
+
+        X = np.vstack((X_pos, X_neg))
+        y = np.concatenate((y_pos, y_neg))
+
+        return X, y
+
+    def _get_part_points(self, rect, seg, N):
+        if self.point_gen_strategy == 'rand':
+            points = self._get_rand_points(rect, N)
+        elif self.point_gen_strategy == 'unif':
+            points = self._get_unif_points(rect, N)
+        elif self.point_gen_strategy == 'norm':
+            points = self._get_norm_points(rect, N, rect.height()/5, rect.width()/5, True)
+        else:
+            raise KeyError('point generations strategy is not good: ', self.point_gen_strategy)
+
+        # filter points for being in seg
+        fpoints = parts.Parts()
+        for point in points:
+            if seg[point.y, point.x, 0]:
+                fpoints.append(point)
+
+        return fpoints
+
+    def _get_bg_points(self, rect, seg, N):
+        img_shape = seg.shape[:2]
+        full_image_rect = Rect(0, img_shape[0], 0, img_shape[1])
+        # strategy can only be rand for unif, if set to norm then go with unif
+        if self.point_gen_strategy == 'rand':
+            points = self._get_rand_points(full_image_rect, N)
+        elif self.point_gen_strategy in ['unif', 'norm']:
+            points = self._get_unif_points(full_image_rect, N, True)
+        else:
+            raise KeyError('point generations strategy is not good: ', self.point_gen_strategy)
+
+        # filter points for note being
+        fpoints = parts.Parts()
+        for point in points:
+            if rect.xmin <= point.y <= rect.xmax and rect.ymin <= point.x <= rect.ymax:
+                continue
+            else:
+                fpoints.append(point)
+        return fpoints
+
+    def _calc_for_image(self, img_id):
+        img = caffe.io.load_image(self.all_image_infos[img_id])
+        seg = cub_utils.thresh_segment_mean(caffe.io.load_image(self.all_segmentations_infos[img_id]))
+        rect = self.learn_from.generate(img_id)
+
+        # generate points
+        part_points = self._get_part_points(rect, seg)
+        bg_points = self._get_bg_points(rect, seg)
+
+        # do the forward path
+        self.dh.init_with_image(img)
+
+        # normalize points for image size
+        part_points.norm_for_size(img.shape[0], img.shape[1], self.resize_dim[0])
+        bg_points.norm_for_size(img.shape[0], img.shape[1], self.resize_dim[0])
+
+        # gather column feature for points
+        feats_positive = self.dh.features(part_points)
+        feats_negative = self.dh.features(bg_points)
+
+        return feats_positive, feats_negative
+
+    def _calculate_points(self):
+        logging.info('calculating for train')
+        self.Xtrain_points, self.ytrain = self._calc_for_rf(self.IDtrain)
+        logging.info('calculating for test')
+        self.Xtest_points, self.ytest = self._calc_for_rf(self.IDtest)
+
+    def _save_points(self):
+        self.final_storage.save_large_instance(self.ip_Xtrain_points, self.Xtrain_points, self.instance_split)
+        self.final_storage.save_large_instance(self.ip_Xtest_points, self.Xtest_points, self.instance_split)
+
+        self.save_instance(self.ip_ytrain, self.ytrain)
+        self.save_instance(self.ip_ytest, self.ytest)
+
+    def _load_points(self):
+        self.Xtrain_points = self.final_storage.load_large_instance(self.ip_Xtrain_points, self.instance_split)
+        self.Xtest_points = self.final_storage.load_large_instance(self.ip_Xtest_points, self.instance_split)
+
+        self.ytrain = self.final_storage.load_instance(self.ip_ytrain)
+        self.ytest = self.final_storage.load_instance(self.ip_ytest)
+
+    def _load_or_calculate(self):
+        if self.final_storage.check_exists(self.ytrain):
+            logging.info('Loading data for RF')
+            tic = dt.now()
+
+            self._load_points()
+
+            logging.info('Loading data took:', dt.now() - tic)
+        else:
+            logging.info('Calculating data for RF')
+            tic = dt.now()
+
+            self._calculate_points()
+
+            logging.info('Calculating data took:', dt.now() - tic)
+            tic = dt.now()
+
+            self._save_points()
+
+            logging.info('Saving data took:', dt.now() - tic)
+
+    def _train_rf(self):
+        logging.info('Training the random forest')
+        tic = dt.now()
+        self.model_rf = sklearn.ensemble.RandomForestClassifier(n_estimators=self.num_tree, bootstrap=False, max_depth=self.max_depth, n_jobs=3, random_state=self.random_state, verbose=0)
+        self.model_rf.fit(self.Xtrain_points, self.ytrain)
+        logging.info('RF training took:', dt.now() - tic)
 
     def setup(self):
-        pass
+        # setup the generator that we will be learning from
+        self.learn_from.setup()
+
+        # setup final storage
+        self._setup_final_storage()
+
+        # setup dataset stuff
+        self.all_image_infos = self.dataset.get_all_image_infos()
+        self.all_segmentations_infos = self.dataset.get_all_segmentation_infos()
+        self.IDtrain, self.IDtest = self.dataset.get_train_test_id()
+
+        # setup deep helper
+        self.dh = cub_utils.DeepHelper(net=self.net)
+
+        # load or calculate stuff
+        self._load_or_calculate()
+
+        # train the rf
+        self._train_rf()
+
+        # generate dense points
+        self.dense_points = parts.gen_dense_points(self.resize_dim)
+
+    def get_name(self):
+        return 'RandomForestRG(lf:%s, net:%s, ntree:%d, maxd:%d, rands:%s, ptgenst:%s, useg:%s, ptnprt:%d, ptnbg:%d)', (self.learn_from.get_name(), self.net_name, self.num_tree, self.max_depth, str(self.random_state), self.point_gen_strategy, str(self.use_seg), self.pt_n_part, self.pt_n_bg)
 
     def generate(self, img_id):
         pass
