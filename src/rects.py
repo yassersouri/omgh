@@ -18,6 +18,12 @@ class Rect(object):
         self.ymax = ymax
         self.info = info
 
+    def width(self):
+        return self.ymax - self.ymin
+
+    def height(self):
+        return self.xmax - self.xmin
+
     def __str__(self):
         return "Rect: \t xmin:%s \t xmax:%s \t ymin:%s \t ymax:%s \t\t info:%s" % (self.xmin, self.xmax, self.ymin, self.ymax, self.info)
 
@@ -189,7 +195,7 @@ class BerkeleyRG(RectGenerator):
         self.bah = cub_utils.BerkeleyAnnotationsHelper(self.base_path, self.IDtrain, self.IDtest)
 
     def get_name(self):
-        return 'BerkeleyRG(Oracle)'
+        return 'BerkeleyRG(%s)(Oracle)' % self.rect_name
 
     def generate(self, img_id):
         rect_info_raw = self.bah.get_berkeley_annotation(img_id, self.rect_name)
@@ -201,11 +207,12 @@ class BerkeleyRG(RectGenerator):
 
 
 class SharifRG(RectGenerator):
-    def __init__(self, cub, part_name, alpha=0.6666):
+    def __init__(self, cub, rect_name, alpha=0.6666):
         self.cub = cub
-        if part_name == 'body':
+        self.rect_name = rect_name
+        if self.rect_name == 'body':
             self.part_filter_name = parts.Parts.BODY_PART_NAMES
-        elif part_name == 'head':
+        elif self.rect_name == 'head':
             self.part_filter_name = parts.Parts.HEAD_PART_NAMES
         self.alpha = alpha
 
@@ -214,7 +221,7 @@ class SharifRG(RectGenerator):
         self.all_image_infos = self.cub.get_all_image_infos()
 
     def get_name(self):
-        return 'SharifRG(Oracle, %0.2f)' % self.alpha
+        return 'SharifRG(%s)(Oracle, a:%0.2f)' % (self.rect_name, self.alpha)
 
     def generate(self, img_id, img_shape=None):
         if img_shape is None:
@@ -265,7 +272,7 @@ class NonparametricRG(RectGenerator):
         self.bboxes = self.dataset.get_bbox()
 
     def get_name(self):
-        return 'NonparametricRG(ng:%s - nnf.ss:%s)' % (self.neighbor_gen.get_name(), self.nn_finder.feature_loader_name)
+        return 'NonparametricRG(ng:%s, nnf.ss:%s)' % (self.neighbor_gen.get_name(), self.nn_finder.feature_loader_name)
 
     def generate(self, img_id):
         query_img = cv2.imread(self.all_image_infos[img_id])

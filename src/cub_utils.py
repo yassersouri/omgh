@@ -310,7 +310,7 @@ class DeepSSFeatureLoader(SSFeatureLoader):
         self.crop_index = crop_index
 
     def get_name(self):
-        return 'deeploader(%s - %s)' % (self.net_name, self.layer_name)
+        return 'deeploader(net:%s, layer:%s)' % (self.net_name, self.layer_name)
 
     def setup(self):
         self.IDtrain, self.IDtest = self.dataset.get_train_test_id()
