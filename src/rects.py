@@ -34,6 +34,12 @@ class Rect(object):
 
         return (self.xmin + self.xmax) / 2., (self.ymin + self.ymax) / 2.
 
+    def is_invalid(self):
+        if self.xmin == -1 or self.ymin == -1 or self.xmax == -1 or self.ymax == -1:
+            return True
+        else:
+            return False
+
     def __str__(self):
         return "Rect: \t xmin:%s \t xmax:%s \t ymin:%s \t ymax:%s \t\t info:%s" % (self.xmin, self.xmax, self.ymin, self.ymax, self.info)
 
@@ -346,6 +352,8 @@ class RandomForestRG(RectGenerator):
 
         for img_id in ids:
             feats_positive, feats_negative = self._calc_for_image(img_id)
+            if feats_positive is None:
+                continue
             positives.append(feats_positive)
             negatives.append(feats_negative)
         X_pos = np.vstack(positives)
@@ -401,6 +409,9 @@ class RandomForestRG(RectGenerator):
         seg = cub_utils.thresh_segment_mean(caffe.io.load_image(self.all_segmentations_infos[img_id]))
         rect = self.learn_from.generate(img_id)
 
+        if rect.is_invalid():
+            return None, None
+
         # generate points
         part_points = self._get_part_points(rect, seg, self.pt_n_part)
         bg_points = self._get_bg_points(rect, seg, self.pt_n_bg)
@@ -428,8 +439,8 @@ class RandomForestRG(RectGenerator):
         self.final_storage.save_large_instance(self.ip_Xtrain_points, self.Xtrain_points, self.instance_split)
         self.final_storage.save_large_instance(self.ip_Xtest_points, self.Xtest_points, self.instance_split)
 
-        self.save_instance(self.ip_ytrain, self.ytrain)
-        self.save_instance(self.ip_ytest, self.ytest)
+        self.final_storage.save_instance(self.ip_ytrain, self.ytrain)
+        self.final_storage.save_instance(self.ip_ytest, self.ytest)
 
     def _load_points(self):
         self.Xtrain_points = self.final_storage.load_large_instance(self.ip_Xtrain_points, self.instance_split)
