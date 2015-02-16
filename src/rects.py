@@ -338,13 +338,13 @@ class RandomForestRG(RectGenerator):
         self.pt_n_bg = pt_n_bg
 
     def _setup_final_storage(self):
-        info_part = '(ptgenst:%s, useg:%s, ptnprt:%d, ptnbg:%d, rands:%s)' % (self.point_gen_strategy, str(self.use_seg), self.pt_n_part, self.pt_n_bg, str(self.random_state))
+        info_part = '(ptgenst:%s, useg:%s, ptnprt:%d, ptnbg:%d)' % (self.point_gen_strategy, str(self.use_seg), self.pt_n_part, self.pt_n_bg)
         self.final_storage.super_name = self.learn_from.get_name()
         self.final_storage.sub_name = self.net_name
         self.ip_Xtrain_points = self.final_storage.get_instance_path(self.final_storage.super_name, self.final_storage.sub_name, 'Xtrain_points%s' % info_part)
         self.ip_Xtest_points = self.final_storage.get_instance_path(self.final_storage.super_name, self.final_storage.sub_name, 'Xtest_points%s' % info_part)
-        self.ip_ytrain = self.final_storage.get_instance_path(self.final_storage.super_name, self.final_storage.sub_name, 'ytrain.mat%s' % info_part)
-        self.ip_ytest = self.final_storage.get_instance_path(self.final_storage.super_name, self.final_storage.sub_name, 'ytest.mat%s' % info_part)
+        self.ip_ytrain = self.final_storage.get_instance_path(self.final_storage.super_name, self.final_storage.sub_name, 'ytrain%s.mat' % info_part)
+        self.ip_ytest = self.final_storage.get_instance_path(self.final_storage.super_name, self.final_storage.sub_name, 'ytest%s.mat' % info_part)
 
     def _calc_for_rf(self, ids):
         positives = []
@@ -447,7 +447,9 @@ class RandomForestRG(RectGenerator):
         self.Xtest_points = self.final_storage.load_large_instance(self.ip_Xtest_points, self.instance_split)
 
         self.ytrain = self.final_storage.load_instance(self.ip_ytrain)
+        self.ytrain = self.ytrain.flatten()
         self.ytest = self.final_storage.load_instance(self.ip_ytest)
+        self.ytest = self.ytest.flatten()
 
     def _load_or_calculate(self):
         if self.final_storage.check_exists(self.ip_ytrain):
@@ -499,7 +501,7 @@ class RandomForestRG(RectGenerator):
         self._train_rf()
 
         # generate dense points
-        self.dense_points = parts.gen_dense_points(self.resize_dim)
+        self.dense_points = parts.gen_dense_points(self.resize_dim[0], self.resize_dim[1])
 
     def get_name(self):
         return 'RandomForestRG(lf:%s, net:%s, ntree:%d, maxd:%d, rands:%s, ptgenst:%s, useg:%s, ptnprt:%d, ptnbg:%d)', (self.learn_from.get_name(), self.net_name, self.num_tree, self.max_depth, str(self.random_state), self.point_gen_strategy, str(self.use_seg), self.pt_n_part, self.pt_n_bg)
