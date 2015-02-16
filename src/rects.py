@@ -188,6 +188,9 @@ class BerkeleyRG(RectGenerator):
         self.IDtrain, self.IDtest = self.cub.get_train_test_id()
         self.bah = cub_utils.BerkeleyAnnotationsHelper(self.base_path, self.IDtrain, self.IDtest)
 
+    def get_name(self):
+        return 'BerkeleyRG(Oracle)'
+
     def generate(self, img_id):
         rect_info_raw = self.bah.get_berkeley_annotation(img_id, self.rect_name)
         xmin, xmax, ymin, ymax = rect_info_raw
@@ -209,6 +212,9 @@ class SharifRG(RectGenerator):
     def setup(self):
         self.cub_parts = self.cub.get_parts()
         self.all_image_infos = self.cub.get_all_image_infos()
+
+    def get_name(self):
+        return 'SharifRG(Oracle, %0.2f)' % self.alpha
 
     def generate(self, img_id, img_shape=None):
         if img_shape is None:
