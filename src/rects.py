@@ -8,6 +8,9 @@ import settings
 import sys
 import sklearn.ensemble
 import logging
+import skimage.morphology
+import skimage.measure
+import scipy.stats
 from datetime import datetime as dt
 sys.path.append(settings.CAFFE_PYTHON_PATH)
 import caffe
@@ -504,16 +507,106 @@ class RandomForestRG(RectGenerator):
         self.dense_points = parts.gen_dense_points(self.resize_dim[0], self.resize_dim[1])
 
     def get_name(self):
-        return 'RandomForestRG(lf:%s, net:%s, ntree:%d, maxd:%d, rands:%s, ptgenst:%s, useg:%s, ptnprt:%d, ptnbg:%d)', (self.learn_from.get_name(), self.net_name, self.num_tree, self.max_depth, str(self.random_state), self.point_gen_strategy, str(self.use_seg), self.pt_n_part, self.pt_n_bg)
+        return 'RandomForestRG(lf:%s, net:%s, ntree:%d, maxd:%d, rands:%s, ptgenst:%s, useg:%s, ptnprt:%d, ptnbg:%d)' % (self.learn_from.get_name(), self.net_name, self.num_tree, self.max_depth, str(self.random_state), self.point_gen_strategy, str(self.use_seg), self.pt_n_part, self.pt_n_bg)
 
-    def generate(self, img_id):
-        pass
+    def _features_for_image(self, img):
+        self.dh.init_with_image(img)
+        return self.dh.features(self.dense_points)
 
-    def generate_addr(self, img_path):
-        pass
+    def _predict_feature_of_image(self, X, max_prob_lower=None, return_prob=False):
+        preds_prob = self.model_rf.predict_proba(X)
+        max_prob = np.max(preds_prob[:, 1])
+        preds_prob = preds_prob[:, 1].reshape(self.resize_dim).T
 
-    def vis(self, img_info, is_path=False):
-        pass
+        if max_prob_lower is None:
+            preds = preds_prob >= (max_prob/2)
+        else:
+            preds = preds_prob >= max(max_prob_lower, (max_prob/2))
+
+        if not return_prob:
+            return preds
+        else:
+            return preds, preds_prob
+
+    def _post_process_preds(self, preds):
+        preds = skimage.morphology.closing(preds, skimage.morphology.square(10))
+        preds = skimage.morphology.remove_small_objects(preds, min_size=10, connectivity=1)
+        return preds
+
+    def _find_rect_from_preds(self, preds):
+        """
+        returns the -1 rect if there is no rect found
+        """
+        L, N = skimage.measure.label(preds, return_num=True, background=0)
+        if N > 0:
+            L_no_bg = L[L != -1].flatten()
+            vals, counts = scipy.stats.mode(L_no_bg)
+            part_label = int(vals[0])
+
+            indices = np.where(L == part_label)
+            xmin = indices[0].min()
+            xmax = indices[0].max()
+            ymin = indices[1].min()
+            ymax = indices[1].max()
+
+            return Rect(xmin, xmax, ymin, ymax, 'Found using %s' % self.get_name())
+        else:
+            return Rect(-1, -1, -1, -1, '%s - Not found any rect.' % self.get_name())
+
+    def generate(self, img_id, max_prob_lower=None):
+        img = caffe.io.load_image(self.all_image_infos[img_id])
+        X = self._features_for_image(img)
+        preds = self._predict_feature_of_image(X, max_prob_lower)
+        preds = self._post_process_preds(preds)
+        rect = self._find_rect_from_preds(preds)
+        rect.denorm_for_size(img.shape, self.resize_dim[0])
+        return rect
+
+    def generate_addr(self, img_path, max_prob_lower=None):
+        img = caffe.io.load_image(img_path)
+        X = self._features_for_image(img)
+        preds = self._predict_feature_of_image(X, max_prob_lower)
+        preds = self._post_process_preds(preds)
+        rect = self._find_rect_from_preds(preds)
+        rect.denorm_for_size(img.shape, self.resize_dim[0])
+        return rect
+
+    def vis(self, img_info, is_path=False, max_prob_lower=None):
+        if is_path:
+            img = caffe.io.load_image(img_info)
+        else:
+            img = caffe.io.load_image(self.all_image_infos[img_info])
+
+        img_r = skimage.transform.resize(img, self.resize_dim)
+        X = self._features_for_image(img)
+        preds, preds_prob = self._predict_feature_of_image(X, max_prob_lower, return_prob=True)
+
+        fig = plt.figure(figsize=(10, 10))
+
+        ax = fig.add_subplot(223)
+        ax.set_title('RF output')
+        ax.matshow(preds)
+
+        preds = self._post_process_preds(preds)
+        rect = self._find_rect_from_preds(preds)
+        rect.denorm_for_size(img.shape, self.resize_dim[0])
+
+        img = rect.draw_rect(img)
+
+        ax = fig.add_subplot(221)
+        ax.imshow(img)
+        ax.set_title(img_info)
+
+        ax = fig.add_subplot(224)
+        cax = ax.matshow(preds_prob)
+        fig.colorbar(cax)
+
+        imga = np.zeros((img_r.shape[0], img_r.shape[1], 4))
+        imga[:, :, :3] = img_r
+        imga[:, :, 3] = preds_prob
+
+        ax = fig.add_subplot(222)
+        ax.imshow(imga)
 
 
 class LocalRandomForestRG(RectGenerator):
