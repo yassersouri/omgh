@@ -482,7 +482,7 @@ class RandomForestRG(RectGenerator):
         self.model_rf.fit(self.Xtrain_points, self.ytrain)
         logging.info('RF training took:', dt.now() - tic)
 
-    def setup(self):
+    def setup(self, freeup_mem=True):
         # setup the generator that we will be learning from
         self.learn_from.setup()
 
@@ -505,6 +505,10 @@ class RandomForestRG(RectGenerator):
 
         # generate dense points
         self.dense_points = parts.gen_dense_points(self.resize_dim[0], self.resize_dim[1])
+
+        # freeup memory
+        if freeup_mem:
+            self.Xtrain_points = self.Xtest_points = self.ytrain = self.ytest = 0
 
     def get_name(self):
         return 'RandomForestRG(lf:%s, net:%s, ntree:%d, maxd:%d, rands:%s, ptgenst:%s, useg:%s, ptnprt:%d, ptnbg:%d)' % (self.learn_from.get_name(), self.net_name, self.num_tree, self.max_depth, str(self.random_state), self.point_gen_strategy, str(self.use_seg), self.pt_n_part, self.pt_n_bg)
