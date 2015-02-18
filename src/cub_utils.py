@@ -109,6 +109,8 @@ class DeepHelper(object):
             self.num_feats[layer] = num_feat
             self.feats[layer] = data
 
+        self.ffeats = np.concatenate([self.feats[k] for k in self.layers], axis=2)
+
     def features(self, points, layers=None):
         n_points = len(points)
         if layers is None:
@@ -118,8 +120,8 @@ class DeepHelper(object):
 
         for i, point in enumerate(points):
             x, y = point.y - 1, point.x - 1  # not because I'm idoit, but because of other things!
-            feat_layers = [self.feats[l][x, y, :] for l in layers]
-            features[i, :] = np.concatenate(feat_layers)
+            # feat_layers = [self.feats[l][x, y, :] for l in layers]
+            features[i, :] = self.ffeats[x, y, :]
 
         return features
 
