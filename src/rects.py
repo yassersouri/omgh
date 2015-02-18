@@ -591,7 +591,10 @@ class RandomForestRG(RectGenerator):
         rect = self._find_rect_from_preds(preds)
         rect.denorm_for_size(img.shape, self.resize_dim[0])
 
-        img = rect.draw_rect(img)
+        if not is_path:
+            oracle_rect = self.learn_from.generate(img_info)
+            img = oracle_rect.draw_rect(img, color=(0, 0, 1))
+        img = rect.draw_rect(img, width=1)
 
         ax = fig.add_subplot(221)
         ax.imshow(img)
