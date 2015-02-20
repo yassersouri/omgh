@@ -17,6 +17,7 @@ def main(out_path):
     cub = CUB_200_2011(settings.CUB_ROOT)
     BRGh = rects.BerkeleyRG(settings.BERKELEY_ANNOTATION_BASE_PATH, cub, 'head')
     RFRGh = rects.RandomForestRG(datastore(settings.storage('rf')), BRGh, cub_utils.DeepHelper.get_bvlc_net(), 'caffenet', cub, random_state=313, point_gen_strategy='unif', use_seg=True, pt_n_part=20, pt_n_bg=100)
+    RFRGh.setup()
 
     for i, image in enumerate(cub.get_all_images()):
         print i
