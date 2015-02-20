@@ -15,9 +15,9 @@ from storage import datastore
 @click.argument('out-path', type=click.Path(exists=True))
 def main(out_path):
     cub = CUB_200_2011(settings.CUB_ROOT)
-    BRGh = rects.BerkeleyRG(settings.BERKELEY_ANNOTATION_BASE_PATH, cub, 'head')
-    RFRGh = rects.RandomForestRG(datastore(settings.storage('rf')), BRGh, cub_utils.DeepHelper.get_bvlc_net(), 'caffenet', cub, random_state=313, point_gen_strategy='unif', use_seg=True, pt_n_part=20, pt_n_bg=100)
-    RFRGh.setup()
+    lfrg = rects.BerkeleyRG(settings.BERKELEY_ANNOTATION_BASE_PATH, cub, 'body')
+    RG = rects.RandomForestRG(datastore(settings.storage('rf')), lfrg, cub_utils.DeepHelper.get_bvlc_net(), 'caffenet', cub, random_state=313, point_gen_strategy='unif', use_seg=True, pt_n_part=20, pt_n_bg=100)
+    RG.setup()
 
     for i, image in enumerate(cub.get_all_images()):
         print i
@@ -26,7 +26,7 @@ def main(out_path):
         rel_image_path = image['img_file_rel']
 
         o_image = cv2.imread(image_path)
-        rect = RFRGh.generate(img_id)
+        rect = RG.generate(img_id)
         t_img_part = rect.get_rect(o_image)
 
         out_image_path = os.path.join(out_path, rel_image_path)
