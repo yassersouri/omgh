@@ -96,6 +96,11 @@ class Rect(object):
         self.xmax = int(round(centerx + dimx/2))
         self.ymin = int(round(centery - dimy/2))
         self.ymax = int(round(centery + dimy/2))
+        return self
+
+    @staticmethod
+    def init_with_cendim(self, cendim, info):
+        return Rect(0, 0, 0, 0, info)._set_rect_from_cendim(cendim)
 
     def _trim_to_borders(self, img_shape):
         img_h, img_w = img_shape[:2]
@@ -585,9 +590,9 @@ class RandomForestRG(RectGenerator):
         X = self._features_for_image(img)
         preds, preds_prob = self._predict_feature_of_image(X, max_prob_lower, return_prob=True)
 
-        fig = plt.figure(figsize=(10, 10))
+        fig = plt.figure(figsize=(20, 20))
 
-        ax = fig.add_subplot(223)
+        ax = fig.add_subplot(224)
         ax.set_title('RF output')
         ax.matshow(preds)
 
@@ -597,14 +602,14 @@ class RandomForestRG(RectGenerator):
 
         if not is_path:
             oracle_rect = self.learn_from.generate(img_info)
-            img = oracle_rect.draw_rect(img, color=(0, 0, 1))
-        img = rect.draw_rect(img, width=1)
+            img = oracle_rect.draw_rect(img, color=(0, 1, 0))
+        img = rect.draw_rect(img, color=(1, 0, 0), width=2)
 
         ax = fig.add_subplot(221)
         ax.imshow(img)
         ax.set_title(img_info)
 
-        ax = fig.add_subplot(224)
+        ax = fig.add_subplot(222)
         cax = ax.matshow(preds_prob)
         fig.colorbar(cax)
 
@@ -612,7 +617,7 @@ class RandomForestRG(RectGenerator):
         imga[:, :, :3] = img_r
         imga[:, :, 3] = preds_prob
 
-        ax = fig.add_subplot(222)
+        ax = fig.add_subplot(223)
         ax.imshow(imga)
 
 
