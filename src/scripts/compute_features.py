@@ -16,7 +16,7 @@ import click
 @click.option('--full', type=click.BOOL, default=False)
 @click.option('--flipped', type=click.BOOL, default=False)
 @click.option('--force', type=click.BOOL, default=False)
-@click.option('--dataset', default='regular', type=click.Choice(['regular', 'segmented', 'part-head', 'part-body']))
+@click.option('--dataset', default='regular', type=click.Choice(['regular', 'segmented', 'part-head', 'part-body', 'part-head-rf-new', 'part-body-rf-new']))
 @click.option('--storage-name', default='')
 def main(sname, iteration, cropped, full, flipped, force, dataset, storage_name):
     new_name = '%s-%d' % (sname, iteration)
@@ -26,6 +26,10 @@ def main(sname, iteration, cropped, full, flipped, force, dataset, storage_name)
         cub = CUB_200_2011_Parts_Head(settings.CUB_ROOT, full=full)
     elif dataset == 'part-body':
         cub = CUB_200_2011_Parts_Body(settings.CUB_ROOT, full=full)
+    elif dataset == 'part-head-rf-new':
+        cub = CUB_200_2011(settings.CUB_ROOT, 'images_head_rf_new')
+    elif dataset == 'part-body-rf-new':
+        cub = CUB_200_2011(settings.CUB_ROOT, 'images_body_rf_new')
     else:
         cub = CUB_200_2011(settings.CUB_ROOT, full=full)
     if not storage_name:
