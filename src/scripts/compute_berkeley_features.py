@@ -19,7 +19,7 @@ def main(force):
 
     st_head = datastore(settings.storage('bmbh'))
     st_body = datastore(settings.storage('bmbb'))
-    st_crop = datastore(settings.storage('bmbc'))
+    st_crop = datastore(settings.storage('bmbcflp'))
 
     ext_head = Berkeley_Extractor(st_head, pretrained_file=settings.BERKELEY_HEAD_PRET)
     ext_body = Berkeley_Extractor(st_body, pretrained_file=settings.BERKELEY_BODY_PRET)
@@ -28,7 +28,7 @@ def main(force):
     number_of_images_in_dataset = sum(1 for _ in cub_crop.get_all_images())
 
     bar = pyprind.ProgBar(number_of_images_in_dataset, width=80)
-    for t, des in ext_crop.extract_all(cub_crop.get_all_images(), force=force):
+    for t, des in ext_crop.extract_all(cub_crop.get_all_images(), flip=True, force=force):
         bar.update()
     print 'DONE CROP'
 

@@ -59,13 +59,16 @@ class CNN_Features_CAFFE_REFERENCE(BaseExtractor):
 
                     if flip:
                         im = np.fliplr(im)
-                    self.net.predict([im])
+                    if self.full:
+                        self.net.predict([im])
+                    else:
+                        self.net.predict([im], oversample=False)
 
                     if self.full:
                         des = self.net.blobs[self.feature_layer].data[:, :, 0, 0]
                     else:
                         des = self.net.blobs[self.feature_layer].data[
-                            self.feature_crop_index][:, 0, 0]
+                            self.feature_crop_index].flatten()
                 except IOError:
                     # here for the missing images we put zero in their place.
                     # it is not obvious that this is the best thing to do.
@@ -128,7 +131,7 @@ class Berkeley_Extractor(CNN_Features_CAFFE_REFERENCE):
                                         channel_swap=(2, 1, 0),
                                         raw_scale=255, gpu=True)
 
-    def extract_all(self, data_generator, force=False):
+    def extract_all(self, data_generator, flip=False, force=False):
         for t in data_generator:
             instance_name = "%s.%s" % (t['img_id'], self.FILE_NAMES_EXT)
             instance_path = self.storage.get_instance_path(
@@ -136,6 +139,8 @@ class Berkeley_Extractor(CNN_Features_CAFFE_REFERENCE):
             if force or not self.storage.check_exists(instance_path):
                 try:
                     im = caffe.io.load_image(t['img_file'])
+                    if flip:
+                        im = np.fliplr(im)
                     des = self.net.predict([im], oversample=False).flatten()
                 except IOError:
                     # here for the missing images we put zero in their place.

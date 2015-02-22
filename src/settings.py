@@ -39,10 +39,12 @@ STORAGE_NAMES = {
     'nn-parts': 'nn-parts',
     'rf': 'rf',
     'bmbc': 'berkeley-model-berkeley-crop',
+    'bmbcflp': 'berkeley-model-berkeley-crop-flipped',
     'bmbh': 'berkeley-model-berkeley-head',
     'bmbb': 'berkeley-model-berkeley-body',
     'nn-cache': 'nn-cache',
-    'ss-cache': 'ss-cache'
+    'ss-cache': 'ss-cache',
+    'ccrp5': 'ccrp5'
 }
 
 MODEL_NAMES = {
@@ -67,6 +69,8 @@ dyn_aug('cccftv1_2', 'finetune_cub_cropped_val_1_2', 'finetune_cub', 10)
 dyn_aug('cccftv2', 'finetune_cub_cropped_val_2', 'finetune_cub', 10)
 dyn_aug('cccftt', 'finetune_cub_cropped', 'finetune_cub_cropped', 10)
 dyn_aug('ccrftt', 'finetune_cub', 'finetune_cub', 10)
+dyn_aug('cccfttflp', 'finetune_cub_cropped', 'finetune_cub_cropped', 10)
+dyn_aug('ccrfttflp', 'finetune_cub', 'finetune_cub', 10)
 dyn_aug('ccpheadft', 'finetune_cub_part_head', 'finetune_cub_part_head', 10)
 dyn_aug('ccpbodyft', 'finetune_cub_part_body', 'finetune_cub_part_body', 10)
 dyn_aug('ccpheadrfft', 'finetune_cub_part_head_rf', 'finetune_cub_part_head_rf', 10)
@@ -74,6 +78,12 @@ dyn_aug('ccrft2st', 'finetune_2step_cub', 'cub_2step_step2', 4, 2500)
 dyn_aug('cccft2st', 'finetune_2step_cub_cropped', 'cub_2step_step2', 2, 25000)
 dyn_aug('ccpheadrfftn', 'finetune_cub_part_head_rf_new', 'finetune_cub_part', 10)
 dyn_aug('ccpbodyrfftn', 'finetune_cub_part_body_rf_new', 'finetune_cub_part', 10)
+dyn_aug('ccpheadrfftnflp', 'finetune_cub_part_head_rf_new', 'finetune_cub_part', 10)
+dyn_aug('ccpbodyrfftnflp', 'finetune_cub_part_body_rf_new', 'finetune_cub_part', 10)
+dyn_aug('ccpheadrfftn2st', 'finetune_2step_cub_part_head_rf', 'cub_2step_step2', 2, 25000)
+dyn_aug('ccpbodyrfftn2st', 'finetune_2step_cub_part_body_rf', 'cub_2step_step2', 2, 25000)
+dyn_aug('ccpheadrfftn2stflp', 'finetune_2step_cub_part_head_rf', 'cub_2step_step2', 2, 25000)
+dyn_aug('ccpbodyrfftn2stflp', 'finetune_2step_cub_part_body_rf', 'cub_2step_step2', 2, 25000)
 
 
 def storage(sname):
