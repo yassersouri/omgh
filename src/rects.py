@@ -483,7 +483,7 @@ class RandomForestRG(RectGenerator):
     def _train_rf(self):
         logging.info('Training the random forest')
         tic = dt.now()
-        self.model_rf = sklearn.ensemble.RandomForestClassifier(n_estimators=self.num_tree, bootstrap=False, max_depth=self.max_depth, n_jobs=3, random_state=self.random_state, verbose=0)
+        self.model_rf = sklearn.ensemble.RandomForestClassifier(n_estimators=self.num_tree, bootstrap=False, max_depth=self.max_depth, n_jobs=1, random_state=self.random_state, verbose=0)
         self.model_rf.fit(self.Xtrain_points, self.ytrain)
         logging.info('RF training took:', dt.now() - tic)
 
