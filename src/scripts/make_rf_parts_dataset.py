@@ -12,15 +12,17 @@ from storage import datastore
 
 
 @click.command()
-@click.argument('out-path', type=click.Path(exists=True))
-@click.option('--part', type=click.Choice(['head', 'body']), default='body')
+@click.argument('out-path', type=click.Path())
+@click.option('--part', type=click.Choice(['head', 'body', 'bbox']), default='body')
 @click.option('--random-state', type=click.INT, default=313)
 @click.option('--pgs', type=click.Choice(['unif', 'rand', 'norm']), default='unif')
 @click.option('--net-name', default='caffenet')
 def main(out_path, part, random_state, pgs, net_name):
+    utils.ensure_dir(out_path)
+
     cub = CUB_200_2011(settings.CUB_ROOT)
     lfrg = rects.BerkeleyRG(settings.BERKELEY_ANNOTATION_BASE_PATH, cub, part)
-    RG = rects.RandomForestRG(datastore(settings.storage('rf')), lfrg, cub_utils.DeepHelper.get_custom_net(settings.model('cccftt-60000'), settings.pretrained('cccftt-60000')), net_name, cub, random_state=random_state, point_gen_strategy=pgs, use_seg=True, pt_n_part=20, pt_n_bg=100)
+    RG = rects.RandomForestRG(datastore(settings.storage('rf')), lfrg, cub_utils.DeepHelper.get_custom_net(settings.model(net_name), settings.pretrained(net_name)), net_name, cub, random_state=random_state, point_gen_strategy=pgs, use_seg=True, pt_n_part=20, pt_n_bg=100)
     RG.setup()
 
     for i, image in enumerate(cub.get_all_images()):
@@ -36,7 +38,7 @@ def main(out_path, part, random_state, pgs, net_name):
         out_image_path = os.path.join(out_path, rel_image_path)
         utils.ensure_dir(os.path.dirname(out_image_path))
         cv2.imwrite(out_image_path, t_img_part)
-
+    print 'Done'
 
 if __name__ == '__main__':
     main()
