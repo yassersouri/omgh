@@ -380,7 +380,7 @@ class RandomForestRG(RectGenerator):
         elif self.point_gen_strategy == 'unif':
             points = self._get_unif_points(rect, N)
         elif self.point_gen_strategy == 'norm':
-            points = self._get_norm_points(rect, N, rect.height()/5, rect.width()/5, True)
+            points = self._get_norm_points(rect, N, min(3, rect.height()/5.), min(3, rect.width()/5.), True)
         else:
             raise KeyError('point generations strategy is not good: ', self.point_gen_strategy)
 
