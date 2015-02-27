@@ -387,8 +387,9 @@ class RandomForestRG(RectGenerator):
         # filter points for being in seg
         fpoints = parts.Parts()
         for point in points:
-            if seg[point.y, point.x, 0]:
-                fpoints.append(point)
+            if point.is_inbound(seg.shape):
+                if seg[point.y, point.x, 0]:
+                    fpoints.append(point)
 
         return fpoints
 

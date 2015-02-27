@@ -34,6 +34,13 @@ class Part(object):
     def is_part_id(self, part_id):
         return part_id == self.part_id
 
+    def is_inbound(self, img_shape):
+        height, width = img_shape[:2]
+        if 0 < self.y < height and 0 < self.x < width:
+            return True
+        else:
+            return False
+
 
 class Parts(object):
 
