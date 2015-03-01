@@ -10,7 +10,7 @@ import sklearn.cross_validation
 DO_TEST = True
 DO_TRAIN = True
 
-data_folder = 'cub-part-body-rf-new'
+data_folder = 'images_body_rf_def_rand'
 DO_CROP = False
 
 base_folder = '/home/ipl/installs/caffe-rc/data/%s/' % data_folder
@@ -24,7 +24,7 @@ fine_tune_train_val_file = '%s/trainval.txt' % base_folder
 
 
 # cub = CUB_200_2011(settings.CUB_ROOT)
-cub = CUB_200_2011(settings.CUB_ROOT, 'images_body_rf_new')
+cub = CUB_200_2011(settings.CUB_ROOT, 'images_body_rf_def_rand')
 class_dict = cub.get_class_dict()
 
 IDtrain, IDtest = cub.get_train_test_id()
