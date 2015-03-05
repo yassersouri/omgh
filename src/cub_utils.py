@@ -383,12 +383,13 @@ class GISTFeatureLoader(SSFeatureLoader):
 
 class NNFinder(object):
 
-    def __init__(self, final_storage, ssfeature_loader, dataset, normalize=True):
+    def __init__(self, final_storage, ssfeature_loader, dataset, normalize=True, n_neighbors=1):
         self.final_storage = final_storage
         self.ssfeature_loader = ssfeature_loader
         self.feature_loader_name = ssfeature_loader.get_name()
         self.normalize = normalize
         self.dataset = dataset
+        self.n_neighbors = n_neighbors
 
     def setup(self):
         self.final_storage.super_name = 'NNS'
@@ -408,13 +409,16 @@ class NNFinder(object):
                 self.Xtrain = utils.l2_feat_norm(self.Xtrain)
                 self.Xtest = utils.l2_feat_norm(self.Xtest)
 
-            nn_model = sklearn.neighbors.NearestNeighbors(n_neighbors=1, algorithm='ball_tree', metric='minkowski', p=2)
+            nn_model = sklearn.neighbors.NearestNeighbors(n_neighbors=self.n_neighbors, algorithm='ball_tree', metric='minkowski', p=2)
             nn_model.fit(self.Xtrain)
-            self.NNS = nn_model.kneighbors(self.Xtest, 1, return_distance=False)
+            self.NNS = nn_model.kneighbors(self.Xtest, self.n_neighbors, return_distance=False)
             self.final_storage.save_instance(self.final_storage.instance_path, self.NNS)
 
         # this needs change for larges n_neighbors
-        self.NNS = self.NNS.T[0]
+        if n_neighbors == 1:
+            self.NNS = self.NNS.T[0]
+        else:
+            pass
 
     def find_in_train(self, img_id):
         # what is the test index of this img_id?
