@@ -398,8 +398,8 @@ class NNFinder(object):
         self._pre_calculate()
         self.IDtrain, self.IDtest = self.dataset.get_train_test_id()
 
-    def _pre_calculate(self):
-        if self.final_storage.check_exists(self.final_storage.instance_path):
+    def _pre_calculate(self, force=False):
+        if self.final_storage.check_exists(self.final_storage.instance_path) and not force:
             self.NNS = self.final_storage.load_instance(self.final_storage.instance_path)
         else:
             self.ssfeature_loader.setup()
@@ -409,13 +409,13 @@ class NNFinder(object):
                 self.Xtrain = utils.l2_feat_norm(self.Xtrain)
                 self.Xtest = utils.l2_feat_norm(self.Xtest)
 
-            nn_model = sklearn.neighbors.NearestNeighbors(n_neighbors=self.n_neighbors, algorithm='ball_tree', metric='minkowski', p=2)
-            nn_model.fit(self.Xtrain)
-            self.NNS = nn_model.kneighbors(self.Xtest, self.n_neighbors, return_distance=False)
+            self.nn_model = sklearn.neighbors.NearestNeighbors(n_neighbors=self.n_neighbors, algorithm='ball_tree', metric='minkowski', p=2)
+            self.nn_model.fit(self.Xtrain)
+            self.NNS = self.nn_model.kneighbors(self.Xtest, self.n_neighbors, return_distance=False)
             self.final_storage.save_instance(self.final_storage.instance_path, self.NNS)
 
         # this needs change for larges n_neighbors
-        if n_neighbors == 1:
+        if self.n_neighbors == 1:
             self.NNS = self.NNS.T[0]
         else:
             pass
