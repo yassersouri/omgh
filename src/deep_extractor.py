@@ -1,24 +1,19 @@
 from extractor import BaseExtractor
 import numpy as np
 import sys
-sys.path.append('/home/ipl/installs/caffe-rc/python/')
-import caffe
 import settings
+sys.path.append(settings.CAFFE_PYTHON_PATH)
+import caffe
 
 
 class CNN_Features_CAFFE_REFERENCE(BaseExtractor):
 
-    def __init__(self, storage, model_file=settings.DEFAULT_MODEL_FILE, pretrained_file=settings.DEFAULT_PRETRAINED_FILE, image_mean=settings.ILSVRC_MEAN, full=False, make_net=True, feature_layer='fc7', crop_index=4, xDim=4096):
+    def __init__(self, storage, model_file=settings.DEFAULT_MODEL_FILE, pretrained_file=settings.DEFAULT_PRETRAINED_FILE, image_mean=settings.VGG_PIXEL_MEAN, full=False, make_net=True, feature_layer='fc7', crop_index=0, xDim=4096):
         super(CNN_Features_CAFFE_REFERENCE, self).__init__(storage)
         self.STORAGE_SUB_NAME = 'cnn_feature_caffe_reference'
-        self.full = full
-        if self.full:
-            self.STORAGE_SUB_NAME = 'cnn_feature_caffe_reference_full'
         self.feature_layer = feature_layer
         self.feature_crop_index = crop_index
         self.xDim = xDim
-        if self.full:
-            self.full_length = settings.FULL_LENGTH
 
         self.sub_folder = self.storage.get_sub_folder(
             self.STORAGE_SUPER_NAME, self.STORAGE_SUB_NAME)
@@ -29,19 +24,12 @@ class CNN_Features_CAFFE_REFERENCE(BaseExtractor):
         self.image_mean = image_mean
 
         if make_net:
+            caffe.set_mode_gpu()
             self.net = caffe.Classifier(self.model_file,
                                         self.pretrained_file,
-                                        mean=np.load(self.image_mean),
+                                        mean=self.image_mean,
                                         channel_swap=(2, 1, 0),
                                         raw_scale=255)
-            if self.full:
-                self.net = caffe.Classifier(self.model_file,
-                                            self.pretrained_file,
-                                            mean=np.load(self.image_mean),
-                                            channel_swap=(2, 1, 0),
-                                            raw_scale=255,
-                                            image_dims=(256, 256))
-            self.net.set_mode_gpu()
 
     def extract_all(self, data_generator, flip=False, crop=False, force=False, bbox=None):
         for t in data_generator:
@@ -59,16 +47,9 @@ class CNN_Features_CAFFE_REFERENCE(BaseExtractor):
 
                     if flip:
                         im = np.fliplr(im)
-                    if self.full:
-                        self.net.predict([im])
-                    else:
-                        self.net.predict([im], oversample=False)
-
-                    if self.full:
-                        des = self.net.blobs[self.feature_layer].data[:, :, 0, 0]
-                    else:
-                        des = self.net.blobs[self.feature_layer].data[
-                            self.feature_crop_index].flatten()
+                    self.net.predict([im], oversample=False)
+                    des = self.net.blobs[self.feature_layer].data[
+                        self.feature_crop_index].flatten()
                 except IOError:
                     # here for the missing images we put zero in their place.
                     # it is not obvious that this is the best thing to do.
@@ -77,10 +58,7 @@ class CNN_Features_CAFFE_REFERENCE(BaseExtractor):
                 self.storage.save_instance(instance_path, des)
             else:
                 des = self.storage.load_instance(instance_path)
-                if self.full:
-                    pass
-                else:
-                    des = des.flatten()
+                des = des.flatten()
 
             yield t, des
 
@@ -94,10 +72,7 @@ class CNN_Features_CAFFE_REFERENCE(BaseExtractor):
             raise Exception("Calculate deep features first then load them.")
         else:
             des = self.storage.load_instance(instance_path)
-            if self.full:
-                pass
-            else:
-                des = des.flatten()
+            des = des.flatten()
             return des
 
     def dummy_extract_one(self, img_id, xDim=None):

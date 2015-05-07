@@ -1,12 +1,15 @@
 import os
+import numpy as np
 
-CAFFE_ROOT = '/home/ipl/installs/caffe-rc'
+
+CAFFE_ROOT = '/home/ipl/installs/caffe'
 CAFFE_PYTHON_PATH = os.path.join(CAFFE_ROOT, 'python')
 CUB_ROOT = '/home/ipl/datasets/CUB-200-2011/CUB_200_2011/CUB_200_2011'
 CUB_IMAGES_FOLDER = '%s/images/' % CUB_ROOT
 DEFAULT_MODEL_FILE = '%s/models/bvlc_reference_caffenet/deploy.prototxt' % CAFFE_ROOT
 DEFAULT_PRETRAINED_FILE = '%s/models/bvlc_reference_caffenet/bvlc_reference_caffenet.caffemodel' % CAFFE_ROOT
 ILSVRC_MEAN = '%s/python/caffe/imagenet/ilsvrc_2012_mean.npy' % CAFFE_ROOT
+VGG_PIXEL_MEAN = np.array([103.939, 116.779, 123.68])
 MODEL_FILE_TEMP = '%s/models/%s/deploy.prototxt'
 PRETRAINED_FILE_TEMP = '%s/models/%s/%s_iter_%d.caffemodel'
 
@@ -106,6 +109,11 @@ dyn_aug('f_ccpbrf_def_rand_1', 'finetune_cub_body_rf_def_rand', 'finetune_cub', 
 dyn_aug('f_ccphrf_ft_unif_1', 'finetune_cub_head_rf_cccftt_60000_unif', 'finetune_cub', 6)
 dyn_aug('f_ccphrf_def_norm_1', 'finetune_cub_head_rf_def_norm', 'finetune_cub', 6)
 dyn_aug('f_ccphrf_def_rand_1', 'finetune_cub_head_rf_def_rand', 'finetune_cub', 6)
+# VGG-19
+dyn_aug('f_vgg_19_ccrftt', 'cub_vgg_whole', 'cub', 8)
+dyn_aug('f_vgg_19_ccrftt', 'cub_vgg_bbox', 'cub', 8)
+dyn_aug('f_vgg_19_ccphrf_def_unif', 'cub_vgg_rf_head', 8)
+dyn_aug('f_vgg_19_ccpbrf_def_unif', 'cub_vgg_rf_body', 8)
 
 
 def storage(sname):
